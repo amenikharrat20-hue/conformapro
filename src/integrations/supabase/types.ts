@@ -14,16 +14,268 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      clients: {
+        Row: {
+          adresse_siege: string | null
+          contacts: Json | null
+          contrat_sla: string | null
+          created_at: string
+          gouvernorat: Database["public"]["Enums"]["gouvernorat"] | null
+          id: string
+          logo: string | null
+          matricule_fiscal: string | null
+          nom_legal: string
+          notes: string | null
+          rne_rc: string | null
+          secteur: Database["public"]["Enums"]["secteur"] | null
+          updated_at: string
+        }
+        Insert: {
+          adresse_siege?: string | null
+          contacts?: Json | null
+          contrat_sla?: string | null
+          created_at?: string
+          gouvernorat?: Database["public"]["Enums"]["gouvernorat"] | null
+          id?: string
+          logo?: string | null
+          matricule_fiscal?: string | null
+          nom_legal: string
+          notes?: string | null
+          rne_rc?: string | null
+          secteur?: Database["public"]["Enums"]["secteur"] | null
+          updated_at?: string
+        }
+        Update: {
+          adresse_siege?: string | null
+          contacts?: Json | null
+          contrat_sla?: string | null
+          created_at?: string
+          gouvernorat?: Database["public"]["Enums"]["gouvernorat"] | null
+          id?: string
+          logo?: string | null
+          matricule_fiscal?: string | null
+          nom_legal?: string
+          notes?: string | null
+          rne_rc?: string | null
+          secteur?: Database["public"]["Enums"]["secteur"] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          client_id: string | null
+          created_at: string
+          email: string | null
+          fonction: string | null
+          id: string
+          nom: string | null
+          prenom: string | null
+          site_id: string | null
+          telephone: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          client_id?: string | null
+          created_at?: string
+          email?: string | null
+          fonction?: string | null
+          id: string
+          nom?: string | null
+          prenom?: string | null
+          site_id?: string | null
+          telephone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          client_id?: string | null
+          created_at?: string
+          email?: string | null
+          fonction?: string | null
+          id?: string
+          nom?: string | null
+          prenom?: string | null
+          site_id?: string | null
+          telephone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sites: {
+        Row: {
+          activite: string | null
+          adresse: string | null
+          autorite_protection_civile: string | null
+          client_id: string
+          code_site: string
+          coordonnees_gps: unknown | null
+          created_at: string
+          documents: Json | null
+          effectif: number | null
+          email: string | null
+          gouvernorat: Database["public"]["Enums"]["gouvernorat"] | null
+          id: string
+          niveau_risque: Database["public"]["Enums"]["niveau_risque"] | null
+          nom_site: string
+          prestataires_affectes: Json | null
+          responsable_site: string | null
+          telephone: string | null
+          updated_at: string
+        }
+        Insert: {
+          activite?: string | null
+          adresse?: string | null
+          autorite_protection_civile?: string | null
+          client_id: string
+          code_site: string
+          coordonnees_gps?: unknown | null
+          created_at?: string
+          documents?: Json | null
+          effectif?: number | null
+          email?: string | null
+          gouvernorat?: Database["public"]["Enums"]["gouvernorat"] | null
+          id?: string
+          niveau_risque?: Database["public"]["Enums"]["niveau_risque"] | null
+          nom_site: string
+          prestataires_affectes?: Json | null
+          responsable_site?: string | null
+          telephone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          activite?: string | null
+          adresse?: string | null
+          autorite_protection_civile?: string | null
+          client_id?: string
+          code_site?: string
+          coordonnees_gps?: unknown | null
+          created_at?: string
+          documents?: Json | null
+          effectif?: number | null
+          email?: string | null
+          gouvernorat?: Database["public"]["Enums"]["gouvernorat"] | null
+          id?: string
+          niveau_risque?: Database["public"]["Enums"]["niveau_risque"] | null
+          nom_site?: string
+          prestataires_affectes?: Json | null
+          responsable_site?: string | null
+          telephone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sites_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_client_id: {
+        Args: { _user_id: string }
+        Returns: string
+      }
+      get_user_site_id: {
+        Args: { _user_id: string }
+        Returns: string
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role:
+        | "admin_global"
+        | "admin_client"
+        | "gestionnaire_hse"
+        | "chef_site"
+        | "lecteur"
+      gouvernorat:
+        | "Ariana"
+        | "Béja"
+        | "Ben Arous"
+        | "Bizerte"
+        | "Gabès"
+        | "Gafsa"
+        | "Jendouba"
+        | "Kairouan"
+        | "Kasserine"
+        | "Kébili"
+        | "Kef"
+        | "Mahdia"
+        | "Manouba"
+        | "Médenine"
+        | "Monastir"
+        | "Nabeul"
+        | "Sfax"
+        | "Sidi Bouzid"
+        | "Siliana"
+        | "Sousse"
+        | "Tataouine"
+        | "Tozeur"
+        | "Tunis"
+        | "Zaghouan"
+      niveau_risque: "Faible" | "Moyen" | "Élevé" | "Critique"
+      secteur:
+        | "Alimentaire"
+        | "Automobile"
+        | "Chimie"
+        | "Textile"
+        | "Construction"
+        | "Électronique"
+        | "Pharmaceutique"
+        | "Services"
+        | "Logistique"
+        | "Autre"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +402,53 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: [
+        "admin_global",
+        "admin_client",
+        "gestionnaire_hse",
+        "chef_site",
+        "lecteur",
+      ],
+      gouvernorat: [
+        "Ariana",
+        "Béja",
+        "Ben Arous",
+        "Bizerte",
+        "Gabès",
+        "Gafsa",
+        "Jendouba",
+        "Kairouan",
+        "Kasserine",
+        "Kébili",
+        "Kef",
+        "Mahdia",
+        "Manouba",
+        "Médenine",
+        "Monastir",
+        "Nabeul",
+        "Sfax",
+        "Sidi Bouzid",
+        "Siliana",
+        "Sousse",
+        "Tataouine",
+        "Tozeur",
+        "Tunis",
+        "Zaghouan",
+      ],
+      niveau_risque: ["Faible", "Moyen", "Élevé", "Critique"],
+      secteur: [
+        "Alimentaire",
+        "Automobile",
+        "Chimie",
+        "Textile",
+        "Construction",
+        "Électronique",
+        "Pharmaceutique",
+        "Services",
+        "Logistique",
+        "Autre",
+      ],
+    },
   },
 } as const
