@@ -1,4 +1,4 @@
-import { LayoutDashboard, FileText, ClipboardCheck, AlertTriangle, ShieldCheck, GraduationCap, HardHat, Users, FileCheck, BookOpen, Menu } from "lucide-react";
+import { LayoutDashboard, FileText, ClipboardCheck, AlertTriangle, ShieldCheck, GraduationCap, HardHat, Users, FileCheck, BookOpen, Menu, Building2, Factory } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
   Sidebar,
@@ -15,6 +15,8 @@ import {
 
 const menuItems = [
   { title: "Tableau de bord", url: "/", icon: LayoutDashboard },
+  { title: "Clients", url: "/clients", icon: Building2 },
+  { title: "Sites", url: "/sites", icon: Factory },
   { title: "Veille réglementaire", url: "/veille", icon: BookOpen },
   { title: "Dossier réglementaire", url: "/dossier", icon: FileText },
   { title: "Contrôles techniques", url: "/controles", icon: ClipboardCheck },

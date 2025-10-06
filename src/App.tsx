@@ -6,6 +6,10 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import Dashboard from "./pages/Dashboard";
+import Clients from "./pages/Clients";
+import ClientDetail from "./pages/ClientDetail";
+import Sites from "./pages/Sites";
+import SiteDetail from "./pages/SiteDetail";
 import VeilleReglementaire from "./pages/VeilleReglementaire";
 import DossierReglementaire from "./pages/DossierReglementaire";
 import ControlesTechniques from "./pages/ControlesTechniques";
@@ -27,6 +31,10 @@ const App = () => (
             <main className="flex-1 p-4 sm:p-6 lg:p-8">
               <Routes>
                 <Route path="/" element={<Dashboard />} />
+                <Route path="/clients" element={<Clients />} />
+                <Route path="/clients/:id" element={<ClientDetail />} />
+                <Route path="/sites" element={<Sites />} />
+                <Route path="/sites/:id" element={<SiteDetail />} />
                 <Route path="/veille" element={<VeilleReglementaire />} />
                 <Route path="/dossier" element={<DossierReglementaire />} />
                 <Route path="/controles" element={<ControlesTechniques />} />
