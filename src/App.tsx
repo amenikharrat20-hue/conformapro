@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import Dashboard from "./pages/Dashboard";
+import VeilleReglementaire from "./pages/VeilleReglementaire";
 import DossierReglementaire from "./pages/DossierReglementaire";
 import ControlesTechniques from "./pages/ControlesTechniques";
 import Incidents from "./pages/Incidents";
@@ -26,6 +27,7 @@ const App = () => (
             <main className="flex-1 p-8">
               <Routes>
                 <Route path="/" element={<Dashboard />} />
+                <Route path="/veille" element={<VeilleReglementaire />} />
                 <Route path="/dossier" element={<DossierReglementaire />} />
                 <Route path="/controles" element={<ControlesTechniques />} />
                 <Route path="/incidents" element={<Incidents />} />
