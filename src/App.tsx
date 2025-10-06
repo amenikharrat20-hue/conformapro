@@ -24,7 +24,7 @@ const App = () => (
         <SidebarProvider>
           <div className="flex min-h-screen w-full bg-background">
             <AppSidebar />
-            <main className="flex-1 p-8">
+            <main className="flex-1 p-4 sm:p-6 lg:p-8">
               <Routes>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/veille" element={<VeilleReglementaire />} />

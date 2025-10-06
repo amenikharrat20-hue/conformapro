@@ -18,12 +18,12 @@ export default function Dashboard() {
   return (
     <div className="space-y-8">
       {/* En-tête */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-bold text-foreground">Tableau de bord</h1>
-          <p className="text-muted-foreground mt-2">Vue d'ensemble de la conformité HSE</p>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">Tableau de bord</h1>
+          <p className="text-muted-foreground mt-2 text-sm sm:text-base">Vue d'ensemble de la conformité HSE</p>
         </div>
-        <Button className="bg-gradient-primary shadow-medium">
+        <Button className="bg-gradient-primary shadow-medium w-full sm:w-auto">
           Générer rapport
         </Button>
       </div>
@@ -52,7 +52,7 @@ export default function Dashboard() {
       </Card>
 
       {/* KPIs */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Documents conformes"
           value="124/142"
@@ -118,7 +118,7 @@ export default function Dashboard() {
       </Card>
 
       {/* Conformité par domaine */}
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-2">
         <Card className="shadow-soft">
           <CardHeader>
             <CardTitle>Conformité HSE</CardTitle>

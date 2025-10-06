@@ -60,19 +60,19 @@ export default function DossierReglementaire() {
   return (
     <div className="space-y-8">
       {/* En-tête */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-bold text-foreground">Dossier réglementaire</h1>
-          <p className="text-muted-foreground mt-2">Gestion centralisée des documents de conformité</p>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">Dossier réglementaire</h1>
+          <p className="text-muted-foreground mt-2 text-sm sm:text-base">Gestion centralisée des documents de conformité</p>
         </div>
-        <Button className="bg-gradient-primary shadow-medium">
+        <Button className="bg-gradient-primary shadow-medium w-full sm:w-auto">
           <Upload className="h-4 w-4 mr-2" />
-          Ajouter un document
+          Ajouter
         </Button>
       </div>
 
       {/* Statistiques rapides */}
-      <div className="grid gap-6 md:grid-cols-4">
+      <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
         <Card className="shadow-soft border-l-4 border-l-success">
           <CardContent className="pt-6">
             <div className="text-3xl font-bold text-success">124</div>

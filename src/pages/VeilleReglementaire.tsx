@@ -117,14 +117,14 @@ export default function VeilleReglementaire() {
   return (
     <div className="space-y-8">
       {/* En-tête */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-bold text-foreground">Veille réglementaire</h1>
-          <p className="text-muted-foreground mt-2">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">Veille réglementaire</h1>
+          <p className="text-muted-foreground mt-2 text-sm sm:text-base">
             Suivi, analyse et mise en conformité avec la réglementation HSE tunisienne
           </p>
         </div>
-        <Button className="bg-gradient-primary shadow-medium">
+        <Button className="bg-gradient-primary shadow-medium w-full sm:w-auto">
           <Plus className="h-4 w-4 mr-2" />
           Ajouter un texte
         </Button>
@@ -167,7 +167,7 @@ export default function VeilleReglementaire() {
       </Card>
 
       {/* KPIs */}
-      <div className="grid gap-6 md:grid-cols-4">
+      <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
         <Card className="shadow-soft border-l-4 border-l-primary">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between mb-2">
@@ -213,17 +213,20 @@ export default function VeilleReglementaire() {
       {/* Tabs principales */}
       <Tabs defaultValue="veille" className="space-y-6">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="veille">
-            <BookOpen className="h-4 w-4 mr-2" />
-            Veille légale
+          <TabsTrigger value="veille" className="text-xs sm:text-sm">
+            <BookOpen className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Veille légale</span>
+            <span className="sm:hidden">Veille</span>
           </TabsTrigger>
-          <TabsTrigger value="applicabilite">
-            <Target className="h-4 w-4 mr-2" />
-            Applicabilité
+          <TabsTrigger value="applicabilite" className="text-xs sm:text-sm">
+            <Target className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Applicabilité</span>
+            <span className="sm:hidden">Applic.</span>
           </TabsTrigger>
-          <TabsTrigger value="actions">
-            <ClipboardList className="h-4 w-4 mr-2" />
-            Plan d'action
+          <TabsTrigger value="actions" className="text-xs sm:text-sm">
+            <ClipboardList className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Plan d'action</span>
+            <span className="sm:hidden">Actions</span>
           </TabsTrigger>
         </TabsList>
 
@@ -232,19 +235,20 @@ export default function VeilleReglementaire() {
           {/* Barre de recherche */}
           <Card className="shadow-soft">
             <CardContent className="pt-6">
-              <div className="flex gap-4">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Rechercher un texte, domaine, source..."
+                    placeholder="Rechercher..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
                   />
                 </div>
-                <Button variant="outline">
+                <Button variant="outline" className="w-full sm:w-auto">
                   <Filter className="h-4 w-4 mr-2" />
-                  Filtrer par domaine
+                  <span className="hidden sm:inline">Filtrer par domaine</span>
+                  <span className="sm:hidden">Filtrer</span>
                 </Button>
               </div>
             </CardContent>
@@ -253,81 +257,135 @@ export default function VeilleReglementaire() {
           {/* Liste des textes */}
           <Card className="shadow-medium">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                 <FileText className="h-5 w-5 text-primary" />
                 Base de textes réglementaires
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-sm">
                 Législation HSE, Sécurité, Environnement et RH applicable en Tunisie
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Texte réglementaire</TableHead>
-                    <TableHead>Domaine</TableHead>
-                    <TableHead>Source & Date</TableHead>
-                    <TableHead>Applicabilité</TableHead>
-                    <TableHead>État conformité</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {textesReglementaires.map((texte) => (
-                    <TableRow key={texte.id} className="hover:bg-muted/50">
-                      <TableCell>
-                        <div>
-                          <div className="font-medium text-foreground">{texte.titre}</div>
-                          <div className="text-sm text-muted-foreground mt-1">{texte.resume}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="font-medium">
+              {/* Version mobile - Cards */}
+              <div className="block lg:hidden space-y-4">
+                {textesReglementaires.map((texte) => (
+                  <div
+                    key={texte.id}
+                    className="p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="space-y-3">
+                      <div>
+                        <div className="font-semibold text-foreground mb-1">{texte.titre}</div>
+                        <div className="text-sm text-muted-foreground">{texte.resume}</div>
+                      </div>
+                      
+                      <div className="flex flex-wrap gap-2">
+                        <Badge variant="outline" className="text-xs">
                           {texte.domaine}
                         </Badge>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        <div className="text-sm">{texte.source}</div>
-                        <div className="text-xs text-muted-foreground">{texte.date}</div>
-                      </TableCell>
-                      <TableCell>
                         {texte.applicable ? (
-                          <Badge className="bg-primary text-primary-foreground">
+                          <Badge className="bg-primary text-primary-foreground text-xs">
                             Applicable
                           </Badge>
                         ) : (
-                          <Badge variant="outline">Non applicable</Badge>
+                          <Badge variant="outline" className="text-xs">Non applicable</Badge>
                         )}
-                      </TableCell>
-                      <TableCell>
                         <AlertBadge status={texte.conformite}>
                           {texte.conformite === "conforme" && "Conforme"}
                           {texte.conformite === "expire-bientot" && "À surveiller"}
                           {texte.conformite === "expire" && "Non conforme"}
                         </AlertBadge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="sm">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm">
-                            <ExternalLink className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
+                      </div>
+                      
+                      <div className="text-xs text-muted-foreground">
+                        <div>{texte.source}</div>
+                        <div>{texte.date}</div>
+                      </div>
+                      
+                      <div className="flex gap-2 pt-2">
+                        <Button variant="outline" size="sm" className="flex-1">
+                          <Eye className="h-4 w-4 mr-2" />
+                          Voir
+                        </Button>
+                        <Button variant="outline" size="sm" className="flex-1">
+                          <ExternalLink className="h-4 w-4 mr-2" />
+                          Lien
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Version desktop - Table */}
+              <div className="hidden lg:block overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Texte réglementaire</TableHead>
+                      <TableHead>Domaine</TableHead>
+                      <TableHead>Source & Date</TableHead>
+                      <TableHead>Applicabilité</TableHead>
+                      <TableHead>État conformité</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {textesReglementaires.map((texte) => (
+                      <TableRow key={texte.id} className="hover:bg-muted/50">
+                        <TableCell>
+                          <div>
+                            <div className="font-medium text-foreground">{texte.titre}</div>
+                            <div className="text-sm text-muted-foreground mt-1">{texte.resume}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="font-medium">
+                            {texte.domaine}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          <div className="text-sm">{texte.source}</div>
+                          <div className="text-xs text-muted-foreground">{texte.date}</div>
+                        </TableCell>
+                        <TableCell>
+                          {texte.applicable ? (
+                            <Badge className="bg-primary text-primary-foreground">
+                              Applicable
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline">Non applicable</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <AlertBadge status={texte.conformite}>
+                            {texte.conformite === "conforme" && "Conforme"}
+                            {texte.conformite === "expire-bientot" && "À surveiller"}
+                            {texte.conformite === "expire" && "Non conforme"}
+                          </AlertBadge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button variant="ghost" size="sm">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm">
+                              <ExternalLink className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
 
         {/* Tab Applicabilité */}
         <TabsContent value="applicabilite" className="space-y-6">
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-6 lg:grid-cols-2">
             {/* Conformité par domaine */}
             <Card className="shadow-soft">
               <CardHeader>
@@ -410,19 +468,19 @@ export default function VeilleReglementaire() {
         <TabsContent value="actions" className="space-y-6">
           <Card className="shadow-medium">
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                     <ClipboardList className="h-5 w-5 text-primary" />
                     Plan d'action de mise en conformité
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-sm">
                     Actions correctives pour atteindre la conformité légale complète
                   </CardDescription>
                 </div>
-                <Button className="bg-gradient-primary">
+                <Button className="bg-gradient-primary w-full sm:w-auto">
                   <Download className="h-4 w-4 mr-2" />
-                  Exporter le plan
+                  Exporter
                 </Button>
               </div>
             </CardHeader>
@@ -431,44 +489,44 @@ export default function VeilleReglementaire() {
                 {actionsCorrectives.map((action) => (
                   <div
                     key={action.id}
-                    className="p-6 rounded-lg border border-border hover:bg-muted/50 transition-all shadow-soft"
+                    className="p-4 sm:p-6 rounded-lg border border-border hover:bg-muted/50 transition-all shadow-soft"
                   >
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="font-semibold text-lg text-foreground">{action.texte}</h3>
-                          <AlertBadge status={action.statut}>
-                            {action.statut === "en-cours" && "En cours"}
-                            {action.statut === "expire" && "En retard"}
-                          </AlertBadge>
+                    <div className="space-y-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                        <h3 className="font-semibold text-base sm:text-lg text-foreground flex-1">{action.texte}</h3>
+                        <AlertBadge status={action.statut}>
+                          {action.statut === "en-cours" && "En cours"}
+                          {action.statut === "expire" && "En retard"}
+                        </AlertBadge>
+                      </div>
+                      
+                      <div className="space-y-3 text-sm">
+                        <div className="space-y-1">
+                          <span className="text-muted-foreground font-medium block">Manquement :</span>
+                          <span className="text-destructive block">{action.manquement}</span>
                         </div>
-                        <div className="space-y-2 text-sm">
+                        <div className="space-y-1">
+                          <span className="text-muted-foreground font-medium block">Action corrective :</span>
+                          <span className="text-foreground block">{action.action}</span>
+                        </div>
+                        <div className="flex flex-col sm:flex-row sm:gap-4 gap-2 mt-3">
                           <div className="flex gap-2">
-                            <span className="text-muted-foreground font-medium">Manquement :</span>
-                            <span className="text-destructive">{action.manquement}</span>
+                            <span className="text-muted-foreground">👤 Responsable :</span>
+                            <span className="font-medium">{action.responsable}</span>
                           </div>
                           <div className="flex gap-2">
-                            <span className="text-muted-foreground font-medium">Action corrective :</span>
-                            <span className="text-foreground">{action.action}</span>
-                          </div>
-                          <div className="flex gap-4 mt-3">
-                            <div className="flex gap-2">
-                              <span className="text-muted-foreground">👤 Responsable :</span>
-                              <span className="font-medium">{action.responsable}</span>
-                            </div>
-                            <div className="flex gap-2">
-                              <span className="text-muted-foreground">📅 Échéance :</span>
-                              <span className="font-medium">{action.echeance}</span>
-                            </div>
+                            <span className="text-muted-foreground">📅 Échéance :</span>
+                            <span className="font-medium">{action.echeance}</span>
                           </div>
                         </div>
                       </div>
                     </div>
-                    <div className="flex gap-2 justify-end">
-                      <Button variant="outline" size="sm">
+                    
+                    <div className="flex flex-col sm:flex-row gap-2 justify-end mt-4 pt-4 border-t border-border">
+                      <Button variant="outline" size="sm" className="w-full sm:w-auto">
                         Ajouter preuve
                       </Button>
-                      <Button variant="default" size="sm" className="bg-gradient-primary">
+                      <Button variant="default" size="sm" className="bg-gradient-primary w-full sm:w-auto">
                         <CheckCircle2 className="h-4 w-4 mr-2" />
                         Clôturer
                       </Button>
