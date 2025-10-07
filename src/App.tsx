@@ -14,6 +14,9 @@ import VeilleReglementaire from "./pages/VeilleReglementaire";
 import DossierReglementaire from "./pages/DossierReglementaire";
 import ControlesTechniques from "./pages/ControlesTechniques";
 import Incidents from "./pages/Incidents";
+import TextesReglementaires from "./pages/TextesReglementaires";
+import TexteDetail from "./pages/TexteDetail";
+import TexteForm from "./pages/TexteForm";
 import ComingSoon from "./pages/ComingSoon";
 import NotFound from "./pages/NotFound";
 
@@ -35,6 +38,10 @@ const App = () => (
                 <Route path="/clients/:id" element={<ClientDetail />} />
                 <Route path="/sites" element={<Sites />} />
                 <Route path="/sites/:id" element={<SiteDetail />} />
+                <Route path="/textes" element={<TextesReglementaires />} />
+                <Route path="/textes/nouveau" element={<TexteForm />} />
+                <Route path="/textes/:id" element={<TexteDetail />} />
+                <Route path="/textes/:id/editer" element={<TexteForm />} />
                 <Route path="/veille" element={<VeilleReglementaire />} />
                 <Route path="/dossier" element={<DossierReglementaire />} />
                 <Route path="/controles" element={<ControlesTechniques />} />
