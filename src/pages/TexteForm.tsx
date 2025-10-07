@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Save } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, Save, Plus } from "lucide-react";
 import { z } from "zod";
 import { textesQueries, typesActeQueries } from "@/lib/supabase-queries";
 
@@ -17,16 +18,18 @@ const texteSchema = z.object({
   numero_officiel: z.string().regex(/^\d{4}-\d{1,4}$/, "Format: AAAA-NNN (ex: 2016-772)"),
   annee: z.number().min(1900).max(2100),
   date_signature: z.string().optional(),
-  date_publication_jort: z.string().optional(),
+  date_publication_jort: z.string().min(1, "Date de publication requise"),
   jort_numero: z.string().optional(),
   jort_page_debut: z.string().optional(),
   jort_page_fin: z.string().optional(),
   autorite_emettrice: z.string().optional(),
-  intitule: z.string().min(1, "Intitulé requis"),
+  intitule: z.string().min(1, "Titre requis").max(500, "Titre trop long (max 500 caractères)"),
   objet_resume: z.string().optional(),
+  domaines: z.array(z.string()).optional(),
+  mots_cles: z.array(z.string()).optional(),
   statut_vigueur: z.enum(["en_vigueur", "modifie", "abroge", "suspendu"]),
-  url_pdf_ar: z.string().url("URL PDF arabe requise"),
-  url_pdf_fr: z.string().url().optional().or(z.literal("")),
+  url_pdf_ar: z.string().min(1, "URL PDF arabe requise"),
+  url_pdf_fr: z.string().optional().or(z.literal("")),
   notes_editoriales: z.string().optional(),
 });
 
@@ -49,11 +52,16 @@ export default function TexteForm() {
     autorite_emettrice: "",
     intitule: "",
     objet_resume: "",
+    domaines: [] as string[],
+    mots_cles: [] as string[],
     statut_vigueur: "en_vigueur",
     url_pdf_ar: "",
     url_pdf_fr: "",
     notes_editoriales: "",
   });
+
+  const [domaineInput, setDomaineInput] = useState("");
+  const [motCleInput, setMotCleInput] = useState("");
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -82,12 +90,42 @@ export default function TexteForm() {
       autorite_emettrice: texte.autorite_emettrice || "",
       intitule: texte.intitule || "",
       objet_resume: texte.objet_resume || "",
+      domaines: texte.domaines || [],
+      mots_cles: texte.mots_cles || [],
       statut_vigueur: texte.statut_vigueur || "en_vigueur",
       url_pdf_ar: texte.url_pdf_ar || "",
       url_pdf_fr: texte.url_pdf_fr || "",
       notes_editoriales: texte.notes_editoriales || "",
     });
   }
+
+  const addDomaine = () => {
+    if (domaineInput.trim() && !formData.domaines.includes(domaineInput.trim())) {
+      handleChange("domaines", [...formData.domaines, domaineInput.trim()]);
+      setDomaineInput("");
+    }
+  };
+
+  const removeDomaine = (domaine: string) => {
+    handleChange(
+      "domaines",
+      formData.domaines.filter((d) => d !== domaine)
+    );
+  };
+
+  const addMotCle = () => {
+    if (motCleInput.trim() && !formData.mots_cles.includes(motCleInput.trim())) {
+      handleChange("mots_cles", [...formData.mots_cles, motCleInput.trim()]);
+      setMotCleInput("");
+    }
+  };
+
+  const removeMotCle = (motCle: string) => {
+    handleChange(
+      "mots_cles",
+      formData.mots_cles.filter((m) => m !== motCle)
+    );
+  };
 
   const saveMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -298,6 +336,80 @@ export default function TexteForm() {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Domaines */}
+            <div>
+              <Label>Domaines</Label>
+              <div className="flex gap-2 mb-2">
+                <Input
+                  placeholder="Ajouter un domaine (ex: Sécurité, Environnement)"
+                  value={domaineInput}
+                  onChange={(e) => setDomaineInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addDomaine();
+                    }
+                  }}
+                />
+                <Button type="button" onClick={addDomaine} variant="outline" size="icon">
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+              {formData.domaines.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {formData.domaines.map((domaine, idx) => (
+                    <Badge key={idx} variant="secondary" className="gap-1">
+                      {domaine}
+                      <button
+                        type="button"
+                        onClick={() => removeDomaine(domaine)}
+                        className="ml-1 hover:text-destructive"
+                      >
+                        ×
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Mots-clés */}
+            <div>
+              <Label>Mots-clés</Label>
+              <div className="flex gap-2 mb-2">
+                <Input
+                  placeholder="Ajouter un mot-clé"
+                  value={motCleInput}
+                  onChange={(e) => setMotCleInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addMotCle();
+                    }
+                  }}
+                />
+                <Button type="button" onClick={addMotCle} variant="outline" size="icon">
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+              {formData.mots_cles.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {formData.mots_cles.map((motCle, idx) => (
+                    <Badge key={idx} variant="outline" className="gap-1">
+                      {motCle}
+                      <button
+                        type="button"
+                        onClick={() => removeMotCle(motCle)}
+                        className="ml-1 hover:text-destructive"
+                      >
+                        ×
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
 
@@ -320,13 +432,17 @@ export default function TexteForm() {
               </div>
 
               <div>
-                <Label htmlFor="date_publication_jort">Date de publication</Label>
+                <Label htmlFor="date_publication_jort">Date de publication * (JORT)</Label>
                 <Input
                   id="date_publication_jort"
                   type="date"
                   value={formData.date_publication_jort}
                   onChange={(e) => handleChange("date_publication_jort", e.target.value)}
+                  className={errors.date_publication_jort ? "border-destructive" : ""}
                 />
+                {errors.date_publication_jort && (
+                  <p className="text-xs text-destructive mt-1">{errors.date_publication_jort}</p>
+                )}
               </div>
 
               <div>

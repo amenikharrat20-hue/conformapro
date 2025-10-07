@@ -46,6 +46,17 @@ export const textesQueries = {
   },
 
   async create(texte: Partial<TexteReglementaire>) {
+    // Check for duplicate titre
+    const { data: existing } = await (supabase as any)
+      .from("textes_reglementaires")
+      .select("id")
+      .eq("intitule", texte.intitule)
+      .maybeSingle();
+    
+    if (existing) {
+      throw new Error("Un texte avec ce titre existe déjà");
+    }
+
     const { data, error } = await (supabase as any)
       .from("textes_reglementaires")
       .insert([texte])
@@ -56,6 +67,20 @@ export const textesQueries = {
   },
 
   async update(id: string, texte: Partial<TexteReglementaire>) {
+    // Check for duplicate titre (excluding current)
+    if (texte.intitule) {
+      const { data: existing } = await (supabase as any)
+        .from("textes_reglementaires")
+        .select("id")
+        .eq("intitule", texte.intitule)
+        .neq("id", id)
+        .maybeSingle();
+      
+      if (existing) {
+        throw new Error("Un texte avec ce titre existe déjà");
+      }
+    }
+
     const { data, error } = await (supabase as any)
       .from("textes_reglementaires")
       .update(texte)
@@ -64,6 +89,14 @@ export const textesQueries = {
       .single();
     if (error) throw error;
     return data as TexteReglementaire;
+  },
+
+  async delete(id: string) {
+    const { error } = await (supabase as any)
+      .from("textes_reglementaires")
+      .delete()
+      .eq("id", id);
+    if (error) throw error;
   },
 };
 
@@ -88,6 +121,44 @@ export const articlesQueries = {
     if (error) throw error;
     return data as Article[];
   },
+
+  async create(article: Partial<Article>) {
+    const { data, error } = await (supabase as any)
+      .from("articles")
+      .insert([article])
+      .select()
+      .single();
+    if (error) throw error;
+    return data as Article;
+  },
+
+  async createBulk(articles: Partial<Article>[]) {
+    const { data, error } = await (supabase as any)
+      .from("articles")
+      .insert(articles)
+      .select();
+    if (error) throw error;
+    return data as Article[];
+  },
+
+  async update(id: string, article: Partial<Article>) {
+    const { data, error } = await (supabase as any)
+      .from("articles")
+      .update(article)
+      .eq("id", id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data as Article;
+  },
+
+  async delete(id: string) {
+    const { error } = await (supabase as any)
+      .from("articles")
+      .delete()
+      .eq("id", id);
+    if (error) throw error;
+  },
 };
 
 export const relationsQueries = {
@@ -101,5 +172,44 @@ export const relationsQueries = {
       .eq("source_id", sourceId);
     if (error) throw error;
     return data as RelationTexte[];
+  },
+};
+
+export interface ChangelogEntry {
+  id: string;
+  texte_id: string;
+  type_changement: "ajout" | "modification" | "abrogation";
+  resume: string;
+  date_changement: string;
+  created_at: string;
+}
+
+export const changelogQueries = {
+  async getByTexteId(texteId: string) {
+    const { data, error } = await (supabase as any)
+      .from("changelog_reglementaire")
+      .select("*")
+      .eq("texte_id", texteId)
+      .order("date_changement", { ascending: false });
+    if (error) throw error;
+    return data as ChangelogEntry[];
+  },
+
+  async create(entry: Partial<ChangelogEntry>) {
+    const { data, error } = await (supabase as any)
+      .from("changelog_reglementaire")
+      .insert([entry])
+      .select()
+      .single();
+    if (error) throw error;
+    return data as ChangelogEntry;
+  },
+
+  async delete(id: string) {
+    const { error } = await (supabase as any)
+      .from("changelog_reglementaire")
+      .delete()
+      .eq("id", id);
+    if (error) throw error;
   },
 };

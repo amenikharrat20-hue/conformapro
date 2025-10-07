@@ -6,7 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ArrowLeft, FileText, Download, Edit, ExternalLink } from "lucide-react";
-import { textesQueries, articlesQueries, relationsQueries } from "@/lib/supabase-queries";
+import { textesQueries, articlesQueries } from "@/lib/supabase-queries";
+import { ArticleManager } from "@/components/ArticleManager";
+import { ChangelogManager } from "@/components/ChangelogManager";
 
 export default function TexteDetail() {
   const { id } = useParams();
@@ -20,12 +22,6 @@ export default function TexteDetail() {
   const { data: articles } = useQuery({
     queryKey: ["articles", id],
     queryFn: () => articlesQueries.getByTexteId(id!),
-    enabled: !!id,
-  });
-
-  const { data: relations } = useQuery({
-    queryKey: ["relations", id],
-    queryFn: () => relationsQueries.getBySourceId(id!),
     enabled: !!id,
   });
 
@@ -270,118 +266,23 @@ export default function TexteDetail() {
         </CardContent>
       </Card>
 
-      {/* Onglets: Articles & Relations */}
+      {/* Onglets: Articles & Historique */}
       <Tabs defaultValue="articles" className="space-y-4">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="articles">
             Articles ({articles?.length || 0})
           </TabsTrigger>
-          <TabsTrigger value="relations">
-            Relations ({relations?.length || 0})
+          <TabsTrigger value="historique">
+            Historique
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="articles">
-          <Card className="shadow-soft">
-            <CardHeader>
-              <CardTitle>Articles du texte</CardTitle>
-              <CardDescription>
-                Contenu des articles en arabe et français
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {articles && articles.length > 0 ? (
-                <div className="space-y-4">
-                  {articles.map((article) => (
-                    <div
-                      key={article.id}
-                      className="border border-border rounded-lg p-4 hover:bg-muted/30 transition-colors"
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="font-semibold text-foreground">
-                          Article {article.numero}
-                          {article.titre_court && ` - ${article.titre_court}`}
-                        </div>
-                      </div>
-                      {article.contenu_ar && (
-                        <div className="mb-3 text-right" dir="rtl">
-                          <div className="text-xs text-muted-foreground mb-1">النص العربي</div>
-                          <div className="text-sm">{article.contenu_ar}</div>
-                        </div>
-                      )}
-                      {article.contenu_fr && (
-                        <div className="mb-3">
-                          <div className="text-xs text-muted-foreground mb-1">Texte français</div>
-                          <div className="text-sm">{article.contenu_fr}</div>
-                        </div>
-                      )}
-                      {article.notes && (
-                        <div className="text-xs text-muted-foreground italic bg-muted/30 p-2 rounded">
-                          {article.notes}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  Aucun article disponible
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <ArticleManager texteId={id!} articles={articles || []} />
         </TabsContent>
 
-        <TabsContent value="relations">
-          <Card className="shadow-soft">
-            <CardHeader>
-              <CardTitle>Relations avec d'autres textes</CardTitle>
-              <CardDescription>
-                Textes modifiés, abrogés, complétés ou rectifiés
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {relations && relations.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Type de relation</TableHead>
-                      <TableHead>Texte cible</TableHead>
-                      <TableHead>Détails</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {relations.map((relation) => (
-                      <TableRow key={relation.id}>
-                        <TableCell>
-                          <Badge variant="outline">
-                            {getRelationLabel(relation.relation)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium">
-                              {relation.cible?.numero_officiel}
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              {relation.cible?.intitule}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {relation.details || "—"}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  Aucune relation établie
-                </div>
-              )}
-            </CardContent>
-          </Card>
+        <TabsContent value="historique">
+          <ChangelogManager texteId={id!} />
         </TabsContent>
       </Tabs>
     </div>
