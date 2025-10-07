@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -6,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   FileText, 
   Search, 
@@ -20,114 +22,101 @@ import {
   Target,
   ClipboardList,
   Plus,
-  ExternalLink
+  ExternalLink,
+  Calendar
 } from "lucide-react";
 import { AlertBadge } from "@/components/AlertBadge";
+import { useQuery } from "@tanstack/react-query";
+import { textesQueries } from "@/lib/supabase-queries";
 
 export default function VeilleReglementaire() {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
+  const [domaineFilter, setDomaineFilter] = useState<string>("all");
+  const [statutFilter, setStatutFilter] = useState<string>("all");
 
-  // Données des textes réglementaires
-  const textesReglementaires = [
-    {
-      id: 1,
-      titre: "Loi 2025-9 relative à la sous-traitance",
-      source: "JORT n°15 - 2025",
-      date: "15/02/2025",
-      domaine: "RH / Travail",
-      applicable: true,
-      conformite: "conforme" as const,
-      resume: "Interdiction de la sous-traitance de main d'œuvre pour travaux permanents",
-    },
-    {
-      id: 2,
-      titre: "Arrêté du 11 juin 2003 - Formation agents de sécurité",
-      source: "Ministère de l'Intérieur",
-      date: "11/06/2003",
-      domaine: "Sécurité",
-      applicable: true,
-      conformite: "expire-bientot" as const,
-      resume: "Obligation de formation initiale et continue pour agents de sécurité privée",
-    },
-    {
-      id: 3,
-      titre: "Décret relatif aux installations classées dangereuses",
-      source: "JORT n°8 - 2024",
-      date: "20/11/2024",
-      domaine: "Environnement",
-      applicable: true,
-      conformite: "expire" as const,
-      resume: "Réglementation des activités industrielles présentant des risques environnementaux",
-    },
-    {
-      id: 4,
-      titre: "Norme ONPC - Prévention incendie établissements recevant du public",
-      source: "ONPC",
-      date: "05/03/2023",
-      domaine: "Incendie",
-      applicable: true,
-      conformite: "conforme" as const,
-      resume: "Exigences de sécurité incendie pour ERP",
-    },
-    {
-      id: 5,
-      titre: "Code du travail - Articles 150 à 170 (SST)",
-      source: "Code du travail",
-      date: "01/01/2023",
-      domaine: "Santé / Sécurité",
-      applicable: true,
-      conformite: "expire-bientot" as const,
-      resume: "Obligations employeur en matière de santé et sécurité au travail",
-    },
+  // Fetch textes réglementaires
+  const { data: textes, isLoading } = useQuery({
+    queryKey: ["veille-textes", searchTerm, domaineFilter, statutFilter],
+    queryFn: () =>
+      textesQueries.getAll({
+        searchTerm,
+        statutFilter: statutFilter !== "all" ? statutFilter : undefined,
+      }),
+  });
+
+  // Filter by domaine (client-side since domaines is an array)
+  const filteredTextes = textes?.filter((texte) => {
+    if (domaineFilter === "all") return true;
+    return texte.domaines?.includes(domaineFilter);
+  });
+
+  // Calculate statistics
+  const totalTextes = filteredTextes?.length || 0;
+  const textesEnVigueur = filteredTextes?.filter((t) => t.statut_vigueur === "en_vigueur").length || 0;
+  const textesModifies = filteredTextes?.filter((t) => t.statut_vigueur === "modifie").length || 0;
+  const textesAbroges = filteredTextes?.filter((t) => t.statut_vigueur === "abroge").length || 0;
+
+  // Calculate conformity score (simplified)
+  const conformiteGlobale = totalTextes > 0 
+    ? Math.round((textesEnVigueur / totalTextes) * 100) 
+    : 0;
+
+  const getStatutBadge = (statut: string) => {
+    switch (statut) {
+      case "en_vigueur":
+        return { label: "En vigueur", variant: "success" as const };
+      case "modifie":
+        return { label: "Modifié", variant: "warning" as const };
+      case "abroge":
+        return { label: "Abrogé", variant: "destructive" as const };
+      case "suspendu":
+        return { label: "Suspendu", variant: "secondary" as const };
+      default:
+        return { label: statut, variant: "secondary" as const };
+    }
+  };
+
+  const domaines = [
+    "Sécurité",
+    "Incendie",
+    "Environnement",
+    "Travail",
+    "RH",
+    "Santé",
+    "Marchés publics",
+    "Investissement",
+    "Autre",
   ];
-
-  // Données des actions correctives
-  const actionsCorrectives = [
-    {
-      id: 1,
-      texte: "Loi 2025-9 sous-traitance",
-      manquement: "Contrats de prestation non conformes - risque requalification",
-      action: "Réviser tous les contrats de prestation et exclure la fourniture de main d'œuvre",
-      responsable: "Direction RH",
-      echeance: "30/03/2025",
-      statut: "en-cours" as const,
-    },
-    {
-      id: 2,
-      texte: "Installations classées",
-      manquement: "Rapport annuel environnemental non transmis",
-      action: "Préparer et soumettre le rapport annuel à l'ANPE",
-      responsable: "Responsable HSE",
-      echeance: "15/02/2025",
-      statut: "expire" as const,
-    },
-    {
-      id: 3,
-      texte: "Formation agents sécurité",
-      manquement: "3 agents sans recyclage depuis 2022",
-      action: "Organiser session de formation continue conforme arrêté 2003",
-      responsable: "RH / Formation",
-      echeance: "28/02/2025",
-      statut: "en-cours" as const,
-    },
-  ];
-
-  const conformiteGlobale = 78;
 
   return (
     <div className="space-y-8">
       {/* En-tête */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">Veille réglementaire</h1>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
+            Veille réglementaire
+          </h1>
           <p className="text-muted-foreground mt-2 text-sm sm:text-base">
             Suivi, analyse et mise en conformité avec la réglementation HSE tunisienne
           </p>
         </div>
-        <Button className="bg-gradient-primary shadow-medium w-full sm:w-auto">
-          <Plus className="h-4 w-4 mr-2" />
-          Ajouter un texte
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => navigate("/textes")}
+          >
+            <BookOpen className="h-4 w-4 mr-2" />
+            Gérer les textes
+          </Button>
+          <Button
+            className="bg-gradient-primary shadow-medium"
+            onClick={() => navigate("/textes/nouveau")}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Ajouter un texte
+          </Button>
+        </div>
       </div>
 
       {/* Score de conformité légale */}
@@ -143,25 +132,30 @@ export default function VeilleReglementaire() {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-5xl font-bold text-primary">{conformiteGlobale}%</span>
-              <div className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
-                conformiteGlobale >= 90 ? "bg-success/20 text-success" :
-                conformiteGlobale >= 70 ? "bg-warning/20 text-warning" :
-                "bg-destructive/20 text-destructive"
-              }`}>
-                {conformiteGlobale >= 90 ? <CheckCircle2 className="h-8 w-8" /> :
-                 conformiteGlobale >= 70 ? <AlertCircle className="h-8 w-8" /> :
-                 <AlertCircle className="h-8 w-8" />}
+              <div
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
+                  conformiteGlobale >= 90
+                    ? "bg-success/20 text-success"
+                    : conformiteGlobale >= 70
+                    ? "bg-warning/20 text-warning"
+                    : "bg-destructive/20 text-destructive"
+                }`}
+              >
+                {conformiteGlobale >= 90 ? (
+                  <CheckCircle2 className="h-8 w-8" />
+                ) : (
+                  <AlertCircle className="h-8 w-8" />
+                )}
                 <span className="font-bold">
-                  {conformiteGlobale >= 90 ? "Conforme" :
-                   conformiteGlobale >= 70 ? "Attention" :
-                   "Non conforme"}
+                  {conformiteGlobale >= 90
+                    ? "Conforme"
+                    : conformiteGlobale >= 70
+                    ? "Attention"
+                    : "Non conforme"}
                 </span>
               </div>
             </div>
             <Progress value={conformiteGlobale} className="h-3" />
-            <p className="text-sm text-muted-foreground">
-              +3% par rapport au trimestre dernier
-            </p>
           </div>
         </CardContent>
       </Card>
@@ -174,7 +168,7 @@ export default function VeilleReglementaire() {
               <BookOpen className="h-5 w-5 text-primary" />
               <TrendingUp className="h-4 w-4 text-success" />
             </div>
-            <div className="text-3xl font-bold text-primary">142</div>
+            <div className="text-3xl font-bold text-primary">{totalTextes}</div>
             <p className="text-sm text-muted-foreground mt-1">Textes suivis</p>
           </CardContent>
         </Card>
@@ -184,8 +178,8 @@ export default function VeilleReglementaire() {
             <div className="flex items-center justify-between mb-2">
               <CheckCircle2 className="h-5 w-5 text-success" />
             </div>
-            <div className="text-3xl font-bold text-success">89</div>
-            <p className="text-sm text-muted-foreground mt-1">Textes conformes</p>
+            <div className="text-3xl font-bold text-success">{textesEnVigueur}</div>
+            <p className="text-sm text-muted-foreground mt-1">En vigueur</p>
           </CardContent>
         </Card>
 
@@ -194,8 +188,8 @@ export default function VeilleReglementaire() {
             <div className="flex items-center justify-between mb-2">
               <AlertCircle className="h-5 w-5 text-warning" />
             </div>
-            <div className="text-3xl font-bold text-warning">15</div>
-            <p className="text-sm text-muted-foreground mt-1">Actions en cours</p>
+            <div className="text-3xl font-bold text-warning">{textesModifies}</div>
+            <p className="text-sm text-muted-foreground mt-1">Modifiés</p>
           </CardContent>
         </Card>
 
@@ -204,117 +198,126 @@ export default function VeilleReglementaire() {
             <div className="flex items-center justify-between mb-2">
               <Clock className="h-5 w-5 text-destructive" />
             </div>
-            <div className="text-3xl font-bold text-destructive">3</div>
-            <p className="text-sm text-muted-foreground mt-1">Actions en retard</p>
+            <div className="text-3xl font-bold text-destructive">{textesAbroges}</div>
+            <p className="text-sm text-muted-foreground mt-1">Abrogés</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Tabs principales */}
-      <Tabs defaultValue="veille" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="veille" className="text-xs sm:text-sm">
-            <BookOpen className="h-4 w-4 sm:mr-2" />
-            <span className="hidden sm:inline">Veille légale</span>
-            <span className="sm:hidden">Veille</span>
-          </TabsTrigger>
-          <TabsTrigger value="applicabilite" className="text-xs sm:text-sm">
-            <Target className="h-4 w-4 sm:mr-2" />
-            <span className="hidden sm:inline">Applicabilité</span>
-            <span className="sm:hidden">Applic.</span>
-          </TabsTrigger>
-          <TabsTrigger value="actions" className="text-xs sm:text-sm">
-            <ClipboardList className="h-4 w-4 sm:mr-2" />
-            <span className="hidden sm:inline">Plan d'action</span>
-            <span className="sm:hidden">Actions</span>
-          </TabsTrigger>
-        </TabsList>
+      {/* Filtres et recherche */}
+      <Card className="shadow-soft">
+        <CardContent className="pt-6">
+          <div className="flex flex-col gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Rechercher par titre, référence, objet..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Select value={domaineFilter} onValueChange={setDomaineFilter}>
+                <SelectTrigger className="w-full sm:w-[200px]">
+                  <SelectValue placeholder="Domaine" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous les domaines</SelectItem>
+                  {domaines.map((domaine) => (
+                    <SelectItem key={domaine} value={domaine}>
+                      {domaine}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-        {/* Tab Veille légale */}
-        <TabsContent value="veille" className="space-y-6">
-          {/* Barre de recherche */}
-          <Card className="shadow-soft">
-            <CardContent className="pt-6">
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Rechercher..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-                <Button variant="outline" className="w-full sm:w-auto">
-                  <Filter className="h-4 w-4 mr-2" />
-                  <span className="hidden sm:inline">Filtrer par domaine</span>
-                  <span className="sm:hidden">Filtrer</span>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+              <Select value={statutFilter} onValueChange={setStatutFilter}>
+                <SelectTrigger className="w-full sm:w-[200px]">
+                  <SelectValue placeholder="Statut" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous les statuts</SelectItem>
+                  <SelectItem value="en_vigueur">En vigueur</SelectItem>
+                  <SelectItem value="modifie">Modifié</SelectItem>
+                  <SelectItem value="abroge">Abrogé</SelectItem>
+                  <SelectItem value="suspendu">Suspendu</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
-          {/* Liste des textes */}
-          <Card className="shadow-medium">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-                <FileText className="h-5 w-5 text-primary" />
-                Base de textes réglementaires
-              </CardTitle>
-              <CardDescription className="text-sm">
-                Législation HSE, Sécurité, Environnement et RH applicable en Tunisie
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+      {/* Liste des textes */}
+      <Card className="shadow-medium">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+            <FileText className="h-5 w-5 text-primary" />
+            Textes réglementaires
+          </CardTitle>
+          <CardDescription className="text-sm">
+            {filteredTextes?.length || 0} texte(s) trouvé(s)
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="text-center py-8 text-muted-foreground">Chargement...</div>
+          ) : filteredTextes && filteredTextes.length > 0 ? (
+            <>
               {/* Version mobile - Cards */}
               <div className="block lg:hidden space-y-4">
-                {textesReglementaires.map((texte) => (
-                  <div
-                    key={texte.id}
-                    className="p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="space-y-3">
-                      <div>
-                        <div className="font-semibold text-foreground mb-1">{texte.titre}</div>
-                        <div className="text-sm text-muted-foreground">{texte.resume}</div>
-                      </div>
-                      
-                      <div className="flex flex-wrap gap-2">
-                        <Badge variant="outline" className="text-xs">
-                          {texte.domaine}
-                        </Badge>
-                        {texte.applicable ? (
-                          <Badge className="bg-primary text-primary-foreground text-xs">
-                            Applicable
+                {filteredTextes.map((texte) => {
+                  const statutInfo = getStatutBadge(texte.statut_vigueur);
+                  return (
+                    <div
+                      key={texte.id}
+                      className="p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors cursor-pointer"
+                      onClick={() => navigate(`/textes/${texte.id}`)}
+                    >
+                      <div className="space-y-3">
+                        <div>
+                          <div className="font-semibold text-foreground mb-1">
+                            {texte.numero_officiel} - {texte.intitule}
+                          </div>
+                          {texte.objet_resume && (
+                            <div className="text-sm text-muted-foreground line-clamp-2">
+                              {texte.objet_resume}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex flex-wrap gap-2">
+                          {texte.domaines?.slice(0, 2).map((domaine, idx) => (
+                            <Badge key={idx} variant="outline" className="text-xs">
+                              {domaine}
+                            </Badge>
+                          ))}
+                          <Badge
+                            className={
+                              statutInfo.variant === "success"
+                                ? "bg-success text-success-foreground"
+                                : statutInfo.variant === "warning"
+                                ? "bg-warning text-warning-foreground"
+                                : statutInfo.variant === "destructive"
+                                ? "bg-destructive text-destructive-foreground"
+                                : ""
+                            }
+                          >
+                            {statutInfo.label}
                           </Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-xs">Non applicable</Badge>
+                        </div>
+
+                        {texte.date_publication_jort && (
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <Calendar className="h-3 w-3" />
+                            {new Date(texte.date_publication_jort).toLocaleDateString("fr-TN")}
+                          </div>
                         )}
-                        <AlertBadge status={texte.conformite}>
-                          {texte.conformite === "conforme" && "Conforme"}
-                          {texte.conformite === "expire-bientot" && "À surveiller"}
-                          {texte.conformite === "expire" && "Non conforme"}
-                        </AlertBadge>
-                      </div>
-                      
-                      <div className="text-xs text-muted-foreground">
-                        <div>{texte.source}</div>
-                        <div>{texte.date}</div>
-                      </div>
-                      
-                      <div className="flex gap-2 pt-2">
-                        <Button variant="outline" size="sm" className="flex-1">
-                          <Eye className="h-4 w-4 mr-2" />
-                          Voir
-                        </Button>
-                        <Button variant="outline" size="sm" className="flex-1">
-                          <ExternalLink className="h-4 w-4 mr-2" />
-                          Lien
-                        </Button>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Version desktop - Table */}
@@ -322,222 +325,121 @@ export default function VeilleReglementaire() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead>Référence</TableHead>
                       <TableHead>Texte réglementaire</TableHead>
                       <TableHead>Domaine</TableHead>
-                      <TableHead>Source & Date</TableHead>
-                      <TableHead>Applicabilité</TableHead>
-                      <TableHead>État conformité</TableHead>
+                      <TableHead>Date publication</TableHead>
+                      <TableHead>Statut</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {textesReglementaires.map((texte) => (
-                      <TableRow key={texte.id} className="hover:bg-muted/50">
-                        <TableCell>
-                          <div>
-                            <div className="font-medium text-foreground">{texte.titre}</div>
-                            <div className="text-sm text-muted-foreground mt-1">{texte.resume}</div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="font-medium">
-                            {texte.domaine}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          <div className="text-sm">{texte.source}</div>
-                          <div className="text-xs text-muted-foreground">{texte.date}</div>
-                        </TableCell>
-                        <TableCell>
-                          {texte.applicable ? (
-                            <Badge className="bg-primary text-primary-foreground">
-                              Applicable
+                    {filteredTextes.map((texte) => {
+                      const statutInfo = getStatutBadge(texte.statut_vigueur);
+                      return (
+                        <TableRow
+                          key={texte.id}
+                          className="hover:bg-muted/50 cursor-pointer"
+                          onClick={() => navigate(`/textes/${texte.id}`)}
+                        >
+                          <TableCell className="font-medium">
+                            {texte.numero_officiel}
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <div className="font-medium text-foreground">
+                                {texte.intitule}
+                              </div>
+                              {texte.objet_resume && (
+                                <div className="text-sm text-muted-foreground mt-1 line-clamp-1">
+                                  {texte.objet_resume}
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-wrap gap-1">
+                              {texte.domaines?.slice(0, 2).map((domaine, idx) => (
+                                <Badge key={idx} variant="outline" className="text-xs">
+                                  {domaine}
+                                </Badge>
+                              ))}
+                              {texte.domaines && texte.domaines.length > 2 && (
+                                <Badge variant="outline" className="text-xs">
+                                  +{texte.domaines.length - 2}
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {texte.date_publication_jort
+                              ? new Date(texte.date_publication_jort).toLocaleDateString("fr-TN")
+                              : "—"}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              className={
+                                statutInfo.variant === "success"
+                                  ? "bg-success text-success-foreground"
+                                  : statutInfo.variant === "warning"
+                                  ? "bg-warning text-warning-foreground"
+                                  : statutInfo.variant === "destructive"
+                                  ? "bg-destructive text-destructive-foreground"
+                                  : ""
+                              }
+                            >
+                              {statutInfo.label}
                             </Badge>
-                          ) : (
-                            <Badge variant="outline">Non applicable</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <AlertBadge status={texte.conformite}>
-                            {texte.conformite === "conforme" && "Conforme"}
-                            {texte.conformite === "expire-bientot" && "À surveiller"}
-                            {texte.conformite === "expire" && "Non conforme"}
-                          </AlertBadge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button variant="ghost" size="sm">
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm">
-                              <ExternalLink className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/textes/${texte.id}`);
+                                }}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              {texte.url_pdf_ar && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    window.open(texte.url_pdf_ar, "_blank");
+                                  }}
+                                >
+                                  <ExternalLink className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Tab Applicabilité */}
-        <TabsContent value="applicabilite" className="space-y-6">
-          <div className="grid gap-6 lg:grid-cols-2">
-            {/* Conformité par domaine */}
-            <Card className="shadow-soft">
-              <CardHeader>
-                <CardTitle>Conformité par domaine</CardTitle>
-                <CardDescription>État de conformité selon les thématiques HSE</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <div className="flex justify-between mb-2">
-                    <span className="text-sm font-medium">Sécurité incendie</span>
-                    <span className="text-sm text-success font-medium">92%</span>
-                  </div>
-                  <Progress value={92} className="h-2" />
-                </div>
-                <div>
-                  <div className="flex justify-between mb-2">
-                    <span className="text-sm font-medium">Santé & Sécurité au travail</span>
-                    <span className="text-sm text-warning font-medium">78%</span>
-                  </div>
-                  <Progress value={78} className="h-2" />
-                </div>
-                <div>
-                  <div className="flex justify-between mb-2">
-                    <span className="text-sm font-medium">Environnement</span>
-                    <span className="text-sm text-warning font-medium">72%</span>
-                  </div>
-                  <Progress value={72} className="h-2" />
-                </div>
-                <div>
-                  <div className="flex justify-between mb-2">
-                    <span className="text-sm font-medium">Droit du travail / RH</span>
-                    <span className="text-sm text-success font-medium">85%</span>
-                  </div>
-                  <Progress value={85} className="h-2" />
-                </div>
-                <div>
-                  <div className="flex justify-between mb-2">
-                    <span className="text-sm font-medium">Équipements & Installations</span>
-                    <span className="text-sm text-destructive font-medium">65%</span>
-                  </div>
-                  <Progress value={65} className="h-2" />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Applicabilité par site */}
-            <Card className="shadow-soft">
-              <CardHeader>
-                <CardTitle>Applicabilité par site</CardTitle>
-                <CardDescription>Nombre de textes applicables selon les sites</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between p-4 rounded-lg border border-border">
-                  <div>
-                    <div className="font-medium text-foreground">Site Tunis - Siège</div>
-                    <div className="text-sm text-muted-foreground">Bureau administratif</div>
-                  </div>
-                  <div className="text-2xl font-bold text-primary">87</div>
-                </div>
-                <div className="flex items-center justify-between p-4 rounded-lg border border-border">
-                  <div>
-                    <div className="font-medium text-foreground">Site Sfax - Production</div>
-                    <div className="text-sm text-muted-foreground">Industrie manufacturière</div>
-                  </div>
-                  <div className="text-2xl font-bold text-primary">124</div>
-                </div>
-                <div className="flex items-center justify-between p-4 rounded-lg border border-border">
-                  <div>
-                    <div className="font-medium text-foreground">Site Sousse - Entrepôt</div>
-                    <div className="text-sm text-muted-foreground">Logistique</div>
-                  </div>
-                  <div className="text-2xl font-bold text-primary">65</div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        {/* Tab Plan d'action */}
-        <TabsContent value="actions" className="space-y-6">
-          <Card className="shadow-medium">
-            <CardHeader>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-                    <ClipboardList className="h-5 w-5 text-primary" />
-                    Plan d'action de mise en conformité
-                  </CardTitle>
-                  <CardDescription className="text-sm">
-                    Actions correctives pour atteindre la conformité légale complète
-                  </CardDescription>
-                </div>
-                <Button className="bg-gradient-primary w-full sm:w-auto">
-                  <Download className="h-4 w-4 mr-2" />
-                  Exporter
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {actionsCorrectives.map((action) => (
-                  <div
-                    key={action.id}
-                    className="p-4 sm:p-6 rounded-lg border border-border hover:bg-muted/50 transition-all shadow-soft"
-                  >
-                    <div className="space-y-4">
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-                        <h3 className="font-semibold text-base sm:text-lg text-foreground flex-1">{action.texte}</h3>
-                        <AlertBadge status={action.statut}>
-                          {action.statut === "en-cours" && "En cours"}
-                          {action.statut === "expire" && "En retard"}
-                        </AlertBadge>
-                      </div>
-                      
-                      <div className="space-y-3 text-sm">
-                        <div className="space-y-1">
-                          <span className="text-muted-foreground font-medium block">Manquement :</span>
-                          <span className="text-destructive block">{action.manquement}</span>
-                        </div>
-                        <div className="space-y-1">
-                          <span className="text-muted-foreground font-medium block">Action corrective :</span>
-                          <span className="text-foreground block">{action.action}</span>
-                        </div>
-                        <div className="flex flex-col sm:flex-row sm:gap-4 gap-2 mt-3">
-                          <div className="flex gap-2">
-                            <span className="text-muted-foreground">👤 Responsable :</span>
-                            <span className="font-medium">{action.responsable}</span>
-                          </div>
-                          <div className="flex gap-2">
-                            <span className="text-muted-foreground">📅 Échéance :</span>
-                            <span className="font-medium">{action.echeance}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex flex-col sm:flex-row gap-2 justify-end mt-4 pt-4 border-t border-border">
-                      <Button variant="outline" size="sm" className="w-full sm:w-auto">
-                        Ajouter preuve
-                      </Button>
-                      <Button variant="default" size="sm" className="bg-gradient-primary w-full sm:w-auto">
-                        <CheckCircle2 className="h-4 w-4 mr-2" />
-                        Clôturer
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            </>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>Aucun texte réglementaire trouvé</p>
+              <Button
+                variant="outline"
+                className="mt-4"
+                onClick={() => navigate("/textes/nouveau")}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Ajouter le premier texte
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
