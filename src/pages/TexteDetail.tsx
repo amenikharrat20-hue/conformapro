@@ -1,58 +1,31 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import type { TexteReglementaire, Article, RelationTexte } from "@/types/textes";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ArrowLeft, FileText, Download, Edit, ExternalLink } from "lucide-react";
+import { textesQueries, articlesQueries, relationsQueries } from "@/lib/supabase-queries";
 
 export default function TexteDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const { data: texte, isLoading } = useQuery<TexteReglementaire>({
+  const { data: texte, isLoading } = useQuery({
     queryKey: ["texte", id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("textes_reglementaires")
-        .select("*, types_acte(code, libelle)")
-        .eq("id", id!)
-        .maybeSingle();
-      if (error) throw error;
-      return data as unknown as TexteReglementaire;
-    },
+    queryFn: () => textesQueries.getById(id!),
   });
 
-  const { data: articles } = useQuery<Article[]>({
+  const { data: articles } = useQuery({
     queryKey: ["articles", id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("articles")
-        .select("*")
-        .eq("texte_id", id!)
-        .order("numero");
-      if (error) throw error;
-      return data as unknown as Article[];
-    },
+    queryFn: () => articlesQueries.getByTexteId(id!),
     enabled: !!id,
   });
 
-  const { data: relations } = useQuery<RelationTexte[]>({
+  const { data: relations } = useQuery({
     queryKey: ["relations", id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("relations_textes")
-        .select(`
-          *,
-          cible:textes_reglementaires!relations_textes_cible_id_fkey(numero_officiel, intitule)
-        `)
-        .eq("source_id", id!);
-      if (error) throw error;
-      return data as unknown as RelationTexte[];
-    },
+    queryFn: () => relationsQueries.getBySourceId(id!),
     enabled: !!id,
   });
 

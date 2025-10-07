@@ -8,9 +8,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Search, Filter, Eye, FileText, Download } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import type { TexteReglementaire, TypeActeRow } from "@/types/textes";
+import { textesQueries, typesActeQueries } from "@/lib/supabase-queries";
 
 export default function TextesReglementaires() {
   const navigate = useNavigate();
@@ -20,43 +19,20 @@ export default function TextesReglementaires() {
   const [anneeFilter, setAnneeFilter] = useState<string>("all");
   const [statutFilter, setStatutFilter] = useState<string>("all");
 
-  const { data: typesActe } = useQuery<TypeActeRow[]>({
+  const { data: typesActe } = useQuery({
     queryKey: ["types-acte"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("types_acte")
-        .select("*")
-        .order("libelle");
-      if (error) throw error;
-      return data as unknown as TypeActeRow[];
-    },
+    queryFn: () => typesActeQueries.getAll(),
   });
 
-  const { data: textes, isLoading } = useQuery<TexteReglementaire[]>({
+  const { data: textes, isLoading } = useQuery({
     queryKey: ["textes-reglementaires", searchTerm, typeFilter, anneeFilter, statutFilter],
-    queryFn: async () => {
-      let query = supabase
-        .from("textes_reglementaires")
-        .select("*, types_acte(code, libelle)")
-        .order("date_publication_jort", { ascending: false });
-
-      if (searchTerm) {
-        query = query.or(`intitule.ilike.%${searchTerm}%,numero_officiel.ilike.%${searchTerm}%,objet_resume.ilike.%${searchTerm}%`);
-      }
-      if (typeFilter !== "all") {
-        query = query.eq("type_acte", typeFilter);
-      }
-      if (anneeFilter !== "all") {
-        query = query.eq("annee", parseInt(anneeFilter));
-      }
-      if (statutFilter !== "all") {
-        query = query.eq("statut_vigueur", statutFilter);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      return data as unknown as TexteReglementaire[];
-    },
+    queryFn: () =>
+      textesQueries.getAll({
+        searchTerm,
+        typeFilter,
+        anneeFilter,
+        statutFilter,
+      }),
   });
 
   const annees = Array.from({ length: 30 }, (_, i) => (new Date().getFullYear() - i).toString());

@@ -1,9 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import type { TexteReglementaire, TypeActeRow } from "@/types/textes";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Save } from "lucide-react";
 import { z } from "zod";
+import { textesQueries, typesActeQueries } from "@/lib/supabase-queries";
 
 const texteSchema = z.object({
   type_acte: z.string().min(1, "Type d'acte requis"),
@@ -58,29 +57,14 @@ export default function TexteForm() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const { data: typesActe } = useQuery<TypeActeRow[]>({
+  const { data: typesActe } = useQuery({
     queryKey: ["types-acte"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("types_acte")
-        .select("*")
-        .order("libelle");
-      if (error) throw error;
-      return data as unknown as TypeActeRow[];
-    },
+    queryFn: () => typesActeQueries.getAll(),
   });
 
-  const { data: texte } = useQuery<TexteReglementaire>({
+  const { data: texte } = useQuery({
     queryKey: ["texte", id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("textes_reglementaires")
-        .select("*")
-        .eq("id", id!)
-        .maybeSingle();
-      if (error) throw error;
-      return data as unknown as TexteReglementaire;
-    },
+    queryFn: () => textesQueries.getById(id!),
     enabled: isEdit,
   });
 
@@ -108,16 +92,9 @@ export default function TexteForm() {
   const saveMutation = useMutation({
     mutationFn: async (data: any) => {
       if (isEdit) {
-        const { error } = await supabase
-          .from("textes_reglementaires")
-          .update(data)
-          .eq("id", id);
-        if (error) throw error;
+        return await textesQueries.update(id!, data);
       } else {
-        const { error } = await supabase
-          .from("textes_reglementaires")
-          .insert([data]);
-        if (error) throw error;
+        return await textesQueries.create(data);
       }
     },
     onSuccess: () => {
