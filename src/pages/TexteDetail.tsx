@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { TexteReglementaire, Article, RelationTexte } from "@/types/textes";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,20 +13,20 @@ export default function TexteDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const { data: texte, isLoading } = useQuery({
+  const { data: texte, isLoading } = useQuery<TexteReglementaire>({
     queryKey: ["texte", id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("textes_reglementaires")
         .select("*, types_acte(code, libelle)")
         .eq("id", id!)
-        .single();
+        .maybeSingle();
       if (error) throw error;
-      return data;
+      return data as unknown as TexteReglementaire;
     },
   });
 
-  const { data: articles } = useQuery({
+  const { data: articles } = useQuery<Article[]>({
     queryKey: ["articles", id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -34,12 +35,12 @@ export default function TexteDetail() {
         .eq("texte_id", id!)
         .order("numero");
       if (error) throw error;
-      return data;
+      return data as unknown as Article[];
     },
     enabled: !!id,
   });
 
-  const { data: relations } = useQuery({
+  const { data: relations } = useQuery<RelationTexte[]>({
     queryKey: ["relations", id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -50,7 +51,7 @@ export default function TexteDetail() {
         `)
         .eq("source_id", id!);
       if (error) throw error;
-      return data;
+      return data as unknown as RelationTexte[];
     },
     enabled: !!id,
   });

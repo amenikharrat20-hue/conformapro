@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import type { TexteReglementaire, TypeActeRow } from "@/types/textes";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,7 +58,7 @@ export default function TexteForm() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const { data: typesActe } = useQuery({
+  const { data: typesActe } = useQuery<TypeActeRow[]>({
     queryKey: ["types-acte"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -65,20 +66,20 @@ export default function TexteForm() {
         .select("*")
         .order("libelle");
       if (error) throw error;
-      return data;
+      return data as unknown as TypeActeRow[];
     },
   });
 
-  const { data: texte } = useQuery({
+  const { data: texte } = useQuery<TexteReglementaire>({
     queryKey: ["texte", id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("textes_reglementaires")
         .select("*")
         .eq("id", id!)
-        .single();
+        .maybeSingle();
       if (error) throw error;
-      return data;
+      return data as unknown as TexteReglementaire;
     },
     enabled: isEdit,
   });

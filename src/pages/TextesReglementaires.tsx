@@ -10,6 +10,7 @@ import { Plus, Search, Filter, Eye, FileText, Download } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import type { TexteReglementaire, TypeActeRow } from "@/types/textes";
 
 export default function TextesReglementaires() {
   const navigate = useNavigate();
@@ -19,7 +20,7 @@ export default function TextesReglementaires() {
   const [anneeFilter, setAnneeFilter] = useState<string>("all");
   const [statutFilter, setStatutFilter] = useState<string>("all");
 
-  const { data: typesActe } = useQuery({
+  const { data: typesActe } = useQuery<TypeActeRow[]>({
     queryKey: ["types-acte"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -27,11 +28,11 @@ export default function TextesReglementaires() {
         .select("*")
         .order("libelle");
       if (error) throw error;
-      return data;
+      return data as unknown as TypeActeRow[];
     },
   });
 
-  const { data: textes, isLoading } = useQuery({
+  const { data: textes, isLoading } = useQuery<TexteReglementaire[]>({
     queryKey: ["textes-reglementaires", searchTerm, typeFilter, anneeFilter, statutFilter],
     queryFn: async () => {
       let query = supabase
@@ -54,7 +55,7 @@ export default function TextesReglementaires() {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data;
+      return data as unknown as TexteReglementaire[];
     },
   });
 
