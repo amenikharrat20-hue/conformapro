@@ -14,206 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      actions_correctives: {
-        Row: {
-          action: string
-          conformite_id: string
-          cout_estime: number | null
-          created_at: string | null
-          created_by: string | null
-          echeance: string | null
-          id: string
-          manquement: string
-          preuve_cloture_url: string | null
-          priorite: Database["public"]["Enums"]["priorite"] | null
-          responsable: string | null
-          statut: Database["public"]["Enums"]["statut_action"] | null
-          updated_at: string | null
-        }
-        Insert: {
-          action: string
-          conformite_id: string
-          cout_estime?: number | null
-          created_at?: string | null
-          created_by?: string | null
-          echeance?: string | null
-          id?: string
-          manquement: string
-          preuve_cloture_url?: string | null
-          priorite?: Database["public"]["Enums"]["priorite"] | null
-          responsable?: string | null
-          statut?: Database["public"]["Enums"]["statut_action"] | null
-          updated_at?: string | null
-        }
-        Update: {
-          action?: string
-          conformite_id?: string
-          cout_estime?: number | null
-          created_at?: string | null
-          created_by?: string | null
-          echeance?: string | null
-          id?: string
-          manquement?: string
-          preuve_cloture_url?: string | null
-          priorite?: Database["public"]["Enums"]["priorite"] | null
-          responsable?: string | null
-          statut?: Database["public"]["Enums"]["statut_action"] | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "actions_correctives_conformite_id_fkey"
-            columns: ["conformite_id"]
-            isOneToOne: false
-            referencedRelation: "conformite"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      applicabilite: {
-        Row: {
-          activite: string | null
-          applicable: boolean | null
-          article_id: string | null
-          client_id: string
-          created_at: string | null
-          created_by: string | null
-          id: string
-          justification: string | null
-          site_id: string | null
-          texte_id: string
-          updated_at: string | null
-        }
-        Insert: {
-          activite?: string | null
-          applicable?: boolean | null
-          article_id?: string | null
-          client_id: string
-          created_at?: string | null
-          created_by?: string | null
-          id?: string
-          justification?: string | null
-          site_id?: string | null
-          texte_id: string
-          updated_at?: string | null
-        }
-        Update: {
-          activite?: string | null
-          applicable?: boolean | null
-          article_id?: string | null
-          client_id?: string
-          created_at?: string | null
-          created_by?: string | null
-          id?: string
-          justification?: string | null
-          site_id?: string | null
-          texte_id?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "applicabilite_article_id_fkey"
-            columns: ["article_id"]
-            isOneToOne: false
-            referencedRelation: "articles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "applicabilite_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "applicabilite_site_id_fkey"
-            columns: ["site_id"]
-            isOneToOne: false
-            referencedRelation: "sites"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "applicabilite_texte_id_fkey"
-            columns: ["texte_id"]
-            isOneToOne: false
-            referencedRelation: "textes_reglementaires"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      articles: {
-        Row: {
-          created_at: string | null
-          exigences: string[] | null
-          id: string
-          numero: string
-          resume_article: string | null
-          texte_id: string
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          exigences?: string[] | null
-          id?: string
-          numero: string
-          resume_article?: string | null
-          texte_id: string
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          exigences?: string[] | null
-          id?: string
-          numero?: string
-          resume_article?: string | null
-          texte_id?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "articles_texte_id_fkey"
-            columns: ["texte_id"]
-            isOneToOne: false
-            referencedRelation: "textes_reglementaires"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      changelog_reglementaire: {
-        Row: {
-          created_by: string | null
-          date_changement: string | null
-          id: string
-          resume: string | null
-          texte_id: string
-          type_changement: string
-        }
-        Insert: {
-          created_by?: string | null
-          date_changement?: string | null
-          id?: string
-          resume?: string | null
-          texte_id: string
-          type_changement: string
-        }
-        Update: {
-          created_by?: string | null
-          date_changement?: string | null
-          id?: string
-          resume?: string | null
-          texte_id?: string
-          type_changement?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "changelog_reglementaire_texte_id_fkey"
-            columns: ["texte_id"]
-            isOneToOne: false
-            referencedRelation: "textes_reglementaires"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       clients: {
         Row: {
           adresse_siege: string | null
@@ -261,181 +61,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
-      }
-      conformite: {
-        Row: {
-          applicabilite_id: string
-          commentaire: string | null
-          created_at: string | null
-          derniere_mise_a_jour: string | null
-          etat: Database["public"]["Enums"]["etat_conformite"] | null
-          id: string
-          mise_a_jour_par: string | null
-          score: number | null
-        }
-        Insert: {
-          applicabilite_id: string
-          commentaire?: string | null
-          created_at?: string | null
-          derniere_mise_a_jour?: string | null
-          etat?: Database["public"]["Enums"]["etat_conformite"] | null
-          id?: string
-          mise_a_jour_par?: string | null
-          score?: number | null
-        }
-        Update: {
-          applicabilite_id?: string
-          commentaire?: string | null
-          created_at?: string | null
-          derniere_mise_a_jour?: string | null
-          etat?: Database["public"]["Enums"]["etat_conformite"] | null
-          id?: string
-          mise_a_jour_par?: string | null
-          score?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "conformite_applicabilite_id_fkey"
-            columns: ["applicabilite_id"]
-            isOneToOne: false
-            referencedRelation: "applicabilite"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      lectures_validations: {
-        Row: {
-          commentaire: string | null
-          created_at: string | null
-          date_lecture: string | null
-          date_validation: string | null
-          id: string
-          site_id: string | null
-          statut: Database["public"]["Enums"]["statut_lecture"] | null
-          texte_id: string
-          utilisateur_id: string
-        }
-        Insert: {
-          commentaire?: string | null
-          created_at?: string | null
-          date_lecture?: string | null
-          date_validation?: string | null
-          id?: string
-          site_id?: string | null
-          statut?: Database["public"]["Enums"]["statut_lecture"] | null
-          texte_id: string
-          utilisateur_id: string
-        }
-        Update: {
-          commentaire?: string | null
-          created_at?: string | null
-          date_lecture?: string | null
-          date_validation?: string | null
-          id?: string
-          site_id?: string | null
-          statut?: Database["public"]["Enums"]["statut_lecture"] | null
-          texte_id?: string
-          utilisateur_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "lectures_validations_site_id_fkey"
-            columns: ["site_id"]
-            isOneToOne: false
-            referencedRelation: "sites"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "lectures_validations_texte_id_fkey"
-            columns: ["texte_id"]
-            isOneToOne: false
-            referencedRelation: "textes_reglementaires"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      liens_module: {
-        Row: {
-          action_corrective_id: string | null
-          created_at: string | null
-          id: string
-          module: string
-          record_id: string
-          site_id: string
-        }
-        Insert: {
-          action_corrective_id?: string | null
-          created_at?: string | null
-          id?: string
-          module: string
-          record_id: string
-          site_id: string
-        }
-        Update: {
-          action_corrective_id?: string | null
-          created_at?: string | null
-          id?: string
-          module?: string
-          record_id?: string
-          site_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "liens_module_action_corrective_id_fkey"
-            columns: ["action_corrective_id"]
-            isOneToOne: false
-            referencedRelation: "actions_correctives"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "liens_module_site_id_fkey"
-            columns: ["site_id"]
-            isOneToOne: false
-            referencedRelation: "sites"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      preuves: {
-        Row: {
-          ajoute_par: string | null
-          conformite_id: string
-          created_at: string | null
-          date: string | null
-          empreinte_sha256: string | null
-          fichier_url: string | null
-          id: string
-          type: string | null
-        }
-        Insert: {
-          ajoute_par?: string | null
-          conformite_id: string
-          created_at?: string | null
-          date?: string | null
-          empreinte_sha256?: string | null
-          fichier_url?: string | null
-          id?: string
-          type?: string | null
-        }
-        Update: {
-          ajoute_par?: string | null
-          conformite_id?: string
-          created_at?: string | null
-          date?: string | null
-          empreinte_sha256?: string | null
-          fichier_url?: string | null
-          id?: string
-          type?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "preuves_conformite_id_fkey"
-            columns: ["conformite_id"]
-            isOneToOne: false
-            referencedRelation: "conformite"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       profiles: {
         Row: {
@@ -493,33 +118,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      referentiels_secteurs: {
-        Row: {
-          actifs_concernes: string[] | null
-          created_at: string | null
-          exigences_types: string[] | null
-          id: string
-          secteur: Database["public"]["Enums"]["secteur"]
-          updated_at: string | null
-        }
-        Insert: {
-          actifs_concernes?: string[] | null
-          created_at?: string | null
-          exigences_types?: string[] | null
-          id?: string
-          secteur: Database["public"]["Enums"]["secteur"]
-          updated_at?: string | null
-        }
-        Update: {
-          actifs_concernes?: string[] | null
-          created_at?: string | null
-          exigences_types?: string[] | null
-          id?: string
-          secteur?: Database["public"]["Enums"]["secteur"]
-          updated_at?: string | null
-        }
-        Relationships: []
       }
       sites: {
         Row: {
@@ -592,57 +190,6 @@ export type Database = {
           },
         ]
       }
-      textes_reglementaires: {
-        Row: {
-          created_at: string | null
-          created_by: string | null
-          date_publication: string | null
-          domaine: Database["public"]["Enums"]["domaine_reglementaire"]
-          id: string
-          lien_pdf: string | null
-          mots_cles: string[] | null
-          reference: string
-          resume: string | null
-          source: string | null
-          statut: Database["public"]["Enums"]["statut_texte"] | null
-          titre: string
-          updated_at: string | null
-          version: number | null
-        }
-        Insert: {
-          created_at?: string | null
-          created_by?: string | null
-          date_publication?: string | null
-          domaine: Database["public"]["Enums"]["domaine_reglementaire"]
-          id?: string
-          lien_pdf?: string | null
-          mots_cles?: string[] | null
-          reference: string
-          resume?: string | null
-          source?: string | null
-          statut?: Database["public"]["Enums"]["statut_texte"] | null
-          titre: string
-          updated_at?: string | null
-          version?: number | null
-        }
-        Update: {
-          created_at?: string | null
-          created_by?: string | null
-          date_publication?: string | null
-          domaine?: Database["public"]["Enums"]["domaine_reglementaire"]
-          id?: string
-          lien_pdf?: string | null
-          mots_cles?: string[] | null
-          reference?: string
-          resume?: string | null
-          source?: string | null
-          statut?: Database["public"]["Enums"]["statut_texte"] | null
-          titre?: string
-          updated_at?: string | null
-          version?: number | null
-        }
-        Relationships: []
-      }
       user_roles: {
         Row: {
           created_at: string
@@ -692,14 +239,6 @@ export type Database = {
         | "gestionnaire_hse"
         | "chef_site"
         | "lecteur"
-      domaine_reglementaire:
-        | "Incendie"
-        | "Sécurité du travail"
-        | "Environnement"
-        | "RH"
-        | "Hygiène"
-        | "Autres"
-      etat_conformite: "Conforme" | "Partiel" | "Non_conforme" | "Non_evalue"
       gouvernorat:
         | "Ariana"
         | "Béja"
@@ -726,7 +265,6 @@ export type Database = {
         | "Tunis"
         | "Zaghouan"
       niveau_risque: "Faible" | "Moyen" | "Élevé" | "Critique"
-      priorite: "Basse" | "Moyenne" | "Haute" | "Critique"
       secteur:
         | "Alimentaire"
         | "Automobile"
@@ -738,9 +276,6 @@ export type Database = {
         | "Services"
         | "Logistique"
         | "Autre"
-      statut_action: "A_faire" | "En_cours" | "Termine" | "Bloque"
-      statut_lecture: "A_lire" | "Lu" | "Valide"
-      statut_texte: "en_vigueur" | "abroge" | "modifie"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -875,15 +410,6 @@ export const Constants = {
         "chef_site",
         "lecteur",
       ],
-      domaine_reglementaire: [
-        "Incendie",
-        "Sécurité du travail",
-        "Environnement",
-        "RH",
-        "Hygiène",
-        "Autres",
-      ],
-      etat_conformite: ["Conforme", "Partiel", "Non_conforme", "Non_evalue"],
       gouvernorat: [
         "Ariana",
         "Béja",
@@ -911,7 +437,6 @@ export const Constants = {
         "Zaghouan",
       ],
       niveau_risque: ["Faible", "Moyen", "Élevé", "Critique"],
-      priorite: ["Basse", "Moyenne", "Haute", "Critique"],
       secteur: [
         "Alimentaire",
         "Automobile",
@@ -924,9 +449,6 @@ export const Constants = {
         "Logistique",
         "Autre",
       ],
-      statut_action: ["A_faire", "En_cours", "Termine", "Bloque"],
-      statut_lecture: ["A_lire", "Lu", "Valide"],
-      statut_texte: ["en_vigueur", "abroge", "modifie"],
     },
   },
 } as const
