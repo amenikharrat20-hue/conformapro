@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ArrowLeft, FileText, Download, Edit, ExternalLink } from "lucide-react";
-import { textesQueries, articlesQueries } from "@/lib/supabase-queries";
+import { actesQueries, articlesQueries } from "@/lib/actes-queries";
 import { ArticleManager } from "@/components/ArticleManager";
 import { ChangelogManager } from "@/components/ChangelogManager";
 
@@ -15,13 +15,13 @@ export default function TexteDetail() {
   const navigate = useNavigate();
 
   const { data: texte, isLoading } = useQuery({
-    queryKey: ["texte", id],
-    queryFn: () => textesQueries.getById(id!),
+    queryKey: ["acte", id],
+    queryFn: () => actesQueries.getById(id!),
   });
 
   const { data: articles } = useQuery({
     queryKey: ["articles", id],
-    queryFn: () => articlesQueries.getByTexteId(id!),
+    queryFn: () => articlesQueries.getByActeId(id!),
     enabled: !!id,
   });
 
@@ -86,7 +86,7 @@ export default function TexteDetail() {
     return (
       <div className="flex flex-col items-center justify-center h-96 gap-4">
         <div className="text-muted-foreground">Texte non trouvé</div>
-        <Button onClick={() => navigate("/textes")}>
+        <Button onClick={() => navigate("/actes")}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           Retour à la liste
         </Button>
@@ -99,7 +99,7 @@ export default function TexteDetail() {
       {/* En-tête */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" onClick={() => navigate("/textes")}>
+          <Button variant="outline" size="icon" onClick={() => navigate("/actes")}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
@@ -111,7 +111,7 @@ export default function TexteDetail() {
             </p>
           </div>
         </div>
-        <Button variant="outline" onClick={() => navigate(`/textes/${id}/editer`)}>
+        <Button variant="outline" onClick={() => navigate(`/actes/${id}/editer`)}>
           <Edit className="h-4 w-4 mr-2" />
           Éditer
         </Button>
@@ -278,11 +278,11 @@ export default function TexteDetail() {
         </TabsList>
 
         <TabsContent value="articles">
-          <ArticleManager texteId={id!} articles={articles || []} />
+          <ArticleManager acteId={id!} articles={articles || []} />
         </TabsContent>
 
         <TabsContent value="historique">
-          <ChangelogManager texteId={id!} />
+          <ChangelogManager acteId={id!} />
         </TabsContent>
       </Tabs>
     </div>

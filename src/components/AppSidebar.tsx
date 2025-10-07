@@ -17,7 +17,7 @@ const menuItems = [
   { title: "Tableau de bord", url: "/", icon: LayoutDashboard },
   { title: "Clients", url: "/clients", icon: Building2 },
   { title: "Sites", url: "/sites", icon: Factory },
-  { title: "Textes réglementaires", url: "/textes", icon: BookOpen },
+  { title: "Actes réglementaires", url: "/actes", icon: BookOpen },
   { title: "Veille réglementaire", url: "/veille", icon: FileText },
   { title: "Dossier réglementaire", url: "/dossier", icon: FileCheck },
   { title: "Contrôles techniques", url: "/controles", icon: ClipboardCheck },

@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Search, Filter, Eye, FileText, Download } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { textesQueries, typesActeQueries } from "@/lib/supabase-queries";
+import { actesQueries, typesActeQueries } from "@/lib/actes-queries";
 
 export default function TextesReglementaires() {
   const navigate = useNavigate();
@@ -25,12 +25,11 @@ export default function TextesReglementaires() {
   });
 
   const { data: textes, isLoading } = useQuery({
-    queryKey: ["textes-reglementaires", searchTerm, typeFilter, anneeFilter, statutFilter],
+    queryKey: ["actes-reglementaires", searchTerm, typeFilter, statutFilter],
     queryFn: () =>
-      textesQueries.getAll({
+      actesQueries.getAll({
         searchTerm,
         typeFilter,
-        anneeFilter,
         statutFilter,
       }),
   });
@@ -73,7 +72,7 @@ export default function TextesReglementaires() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
-            Textes réglementaires
+            Actes réglementaires
           </h1>
           <p className="text-muted-foreground mt-2 text-sm sm:text-base">
             Gestion de la base réglementaire tunisienne
@@ -81,10 +80,10 @@ export default function TextesReglementaires() {
         </div>
         <Button
           className="bg-gradient-primary shadow-medium w-full sm:w-auto"
-          onClick={() => navigate("/textes/nouveau")}
+          onClick={() => navigate("/actes/nouveau")}
         >
           <Plus className="h-4 w-4 mr-2" />
-          Créer un texte
+          Créer un acte
         </Button>
       </div>
 
@@ -98,7 +97,7 @@ export default function TextesReglementaires() {
             <div className="text-3xl font-bold text-primary">
               {textes?.length || 0}
             </div>
-            <p className="text-sm text-muted-foreground mt-1">Textes totaux</p>
+            <p className="text-sm text-muted-foreground mt-1">Actes totaux</p>
           </CardContent>
         </Card>
 
@@ -194,10 +193,10 @@ export default function TextesReglementaires() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5 text-primary" />
-            Liste des textes réglementaires
+            Liste des actes réglementaires
           </CardTitle>
           <CardDescription>
-            {textes?.length || 0} texte(s) trouvé(s)
+            {textes?.length || 0} acte(s) trouvé(s)
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -271,7 +270,7 @@ export default function TextesReglementaires() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => navigate(`/textes/${texte.id}`)}
+                          onClick={() => navigate(`/actes/${texte.id}`)}
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
@@ -283,7 +282,7 @@ export default function TextesReglementaires() {
             </div>
           ) : (
             <div className="text-center py-8 text-muted-foreground">
-              Aucun texte réglementaire trouvé
+              Aucun acte réglementaire trouvé
             </div>
           )}
         </CardContent>

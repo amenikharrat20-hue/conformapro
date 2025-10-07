@@ -9,13 +9,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, Calendar, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { changelogQueries, type ChangelogEntry } from "@/lib/supabase-queries";
+import { changelogQueries } from "@/lib/actes-queries";
+import type { ChangelogEntry } from "@/types/actes";
 
 interface ChangelogManagerProps {
-  texteId: string;
+  acteId: string;
 }
 
-export function ChangelogManager({ texteId }: ChangelogManagerProps) {
+export function ChangelogManager({ acteId }: ChangelogManagerProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
@@ -27,15 +28,15 @@ export function ChangelogManager({ texteId }: ChangelogManagerProps) {
   });
 
   const { data: changelog } = useQuery({
-    queryKey: ["changelog", texteId],
-    queryFn: () => changelogQueries.getByTexteId(texteId),
+    queryKey: ["changelog", acteId],
+    queryFn: () => changelogQueries.getByActeId(acteId),
   });
 
   const createMutation = useMutation({
     mutationFn: (entry: Partial<ChangelogEntry>) =>
-      changelogQueries.create({ ...entry, texte_id: texteId }),
+      changelogQueries.create({ ...entry, acte_id: acteId }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["changelog", texteId] });
+      queryClient.invalidateQueries({ queryKey: ["changelog", acteId] });
       toast({
         title: "Entrée ajoutée",
         description: "L'entrée d'historique a été ajoutée avec succès",
@@ -59,7 +60,7 @@ export function ChangelogManager({ texteId }: ChangelogManagerProps) {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => changelogQueries.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["changelog", texteId] });
+      queryClient.invalidateQueries({ queryKey: ["changelog", acteId] });
       toast({
         title: "Entrée supprimée",
         description: "L'entrée d'historique a été supprimée avec succès",
@@ -118,7 +119,7 @@ export function ChangelogManager({ texteId }: ChangelogManagerProps) {
           <CardHeader>
             <CardTitle>Nouvelle entrée d'historique</CardTitle>
             <CardDescription>
-              Documentez les changements apportés à ce texte réglementaire
+              Documentez les changements apportés à cet acte réglementaire
             </CardDescription>
           </CardHeader>
           <CardContent>

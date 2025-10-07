@@ -1,17 +1,23 @@
-// Temporary query helpers to bypass TypeScript errors until Supabase types regenerate
+// Query helpers for Actes Réglementaires
 import { supabase } from "@/integrations/supabase/client";
-import type { TexteReglementaire, TypeActeRow, Article, RelationTexte } from "@/types/textes";
+import type { 
+  ActeReglementaire, 
+  TypeActeRow, 
+  Article, 
+  RelationActe,
+  StructureCode,
+  ChangelogEntry
+} from "@/types/actes";
 
-// Type-safe wrappers for textes_reglementaires queries
-export const textesQueries = {
+// Type-safe wrappers for actes_reglementaires queries
+export const actesQueries = {
   async getAll(filters?: {
     searchTerm?: string;
     typeFilter?: string;
-    anneeFilter?: string;
     statutFilter?: string;
   }) {
     let query = (supabase as any)
-      .from("textes_reglementaires")
+      .from("actes_reglementaires")
       .select("*, types_acte(code, libelle)")
       .order("date_publication_jort", { ascending: false });
 
@@ -23,77 +29,74 @@ export const textesQueries = {
     if (filters?.typeFilter && filters.typeFilter !== "all") {
       query = query.eq("type_acte", filters.typeFilter);
     }
-    if (filters?.anneeFilter && filters.anneeFilter !== "all") {
-      query = query.eq("annee", parseInt(filters.anneeFilter));
-    }
     if (filters?.statutFilter && filters.statutFilter !== "all") {
       query = query.eq("statut_vigueur", filters.statutFilter);
     }
 
     const { data, error } = await query;
     if (error) throw error;
-    return data as TexteReglementaire[];
+    return data as ActeReglementaire[];
   },
 
   async getById(id: string) {
     const { data, error } = await (supabase as any)
-      .from("textes_reglementaires")
+      .from("actes_reglementaires")
       .select("*, types_acte(code, libelle)")
       .eq("id", id)
       .maybeSingle();
     if (error) throw error;
-    return data as TexteReglementaire | null;
+    return data as ActeReglementaire | null;
   },
 
-  async create(texte: Partial<TexteReglementaire>) {
-    // Check for duplicate titre
+  async create(acte: Partial<ActeReglementaire>) {
+    // Check for duplicate intitule
     const { data: existing } = await (supabase as any)
-      .from("textes_reglementaires")
+      .from("actes_reglementaires")
       .select("id")
-      .eq("intitule", texte.intitule)
+      .eq("intitule", acte.intitule)
       .maybeSingle();
     
     if (existing) {
-      throw new Error("Un texte avec ce titre existe déjà");
+      throw new Error("Un acte avec ce titre existe déjà");
     }
 
     const { data, error } = await (supabase as any)
-      .from("textes_reglementaires")
-      .insert([texte])
+      .from("actes_reglementaires")
+      .insert([acte])
       .select()
       .single();
     if (error) throw error;
-    return data as TexteReglementaire;
+    return data as ActeReglementaire;
   },
 
-  async update(id: string, texte: Partial<TexteReglementaire>) {
-    // Check for duplicate titre (excluding current)
-    if (texte.intitule) {
+  async update(id: string, acte: Partial<ActeReglementaire>) {
+    // Check for duplicate intitule (excluding current)
+    if (acte.intitule) {
       const { data: existing } = await (supabase as any)
-        .from("textes_reglementaires")
+        .from("actes_reglementaires")
         .select("id")
-        .eq("intitule", texte.intitule)
+        .eq("intitule", acte.intitule)
         .neq("id", id)
         .maybeSingle();
       
       if (existing) {
-        throw new Error("Un texte avec ce titre existe déjà");
+        throw new Error("Un acte avec ce titre existe déjà");
       }
     }
 
     const { data, error } = await (supabase as any)
-      .from("textes_reglementaires")
-      .update(texte)
+      .from("actes_reglementaires")
+      .update(acte)
       .eq("id", id)
       .select()
       .single();
     if (error) throw error;
-    return data as TexteReglementaire;
+    return data as ActeReglementaire;
   },
 
   async delete(id: string) {
     const { error } = await (supabase as any)
-      .from("textes_reglementaires")
+      .from("actes_reglementaires")
       .delete()
       .eq("id", id);
     if (error) throw error;
@@ -112,11 +115,11 @@ export const typesActeQueries = {
 };
 
 export const articlesQueries = {
-  async getByTexteId(texteId: string) {
+  async getByActeId(acteId: string) {
     const { data, error } = await (supabase as any)
       .from("articles")
       .select("*")
-      .eq("texte_id", texteId)
+      .eq("acte_id", acteId)
       .order("numero");
     if (error) throw error;
     return data as Article[];
@@ -161,35 +164,85 @@ export const articlesQueries = {
   },
 };
 
-export const relationsQueries = {
-  async getBySourceId(sourceId: string) {
+export const structuresQueries = {
+  async getByActeId(acteId: string) {
     const { data, error } = await (supabase as any)
-      .from("relations_textes")
-      .select(`
-        *,
-        cible:textes_reglementaires!relations_textes_cible_id_fkey(numero_officiel, intitule)
-      `)
-      .eq("source_id", sourceId);
+      .from("structures_code")
+      .select("*")
+      .eq("acte_id", acteId)
+      .order("numero");
     if (error) throw error;
-    return data as RelationTexte[];
+    return data as StructureCode[];
+  },
+
+  async create(structure: Partial<StructureCode>) {
+    const { data, error } = await (supabase as any)
+      .from("structures_code")
+      .insert([structure])
+      .select()
+      .single();
+    if (error) throw error;
+    return data as StructureCode;
+  },
+
+  async update(id: string, structure: Partial<StructureCode>) {
+    const { data, error } = await (supabase as any)
+      .from("structures_code")
+      .update(structure)
+      .eq("id", id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data as StructureCode;
+  },
+
+  async delete(id: string) {
+    const { error } = await (supabase as any)
+      .from("structures_code")
+      .delete()
+      .eq("id", id);
+    if (error) throw error;
   },
 };
 
-export interface ChangelogEntry {
-  id: string;
-  texte_id: string;
-  type_changement: "ajout" | "modification" | "abrogation";
-  resume: string;
-  date_changement: string;
-  created_at: string;
-}
+export const relationsQueries = {
+  async getBySourceId(sourceId: string) {
+    const { data, error } = await (supabase as any)
+      .from("relations_actes")
+      .select(`
+        *,
+        cible:actes_reglementaires!relations_actes_cible_id_fkey(numero_officiel, intitule)
+      `)
+      .eq("source_id", sourceId);
+    if (error) throw error;
+    return data as RelationActe[];
+  },
+
+  async create(relation: Partial<RelationActe>) {
+    const { data, error } = await (supabase as any)
+      .from("relations_actes")
+      .insert([relation])
+      .select()
+      .single();
+    if (error) throw error;
+    return data as RelationActe;
+  },
+
+  async delete(id: string) {
+    const { error } = await (supabase as any)
+      .from("relations_actes")
+      .delete()
+      .eq("id", id);
+    if (error) throw error;
+  },
+};
 
 export const changelogQueries = {
-  async getByTexteId(texteId: string) {
+  async getByActeId(acteId: string) {
     const { data, error } = await (supabase as any)
       .from("changelog_reglementaire")
       .select("*")
-      .eq("texte_id", texteId)
+      .eq("acte_id", acteId)
       .order("date_changement", { ascending: false });
     if (error) throw error;
     return data as ChangelogEntry[];

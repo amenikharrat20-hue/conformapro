@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Save, Plus } from "lucide-react";
 import { z } from "zod";
-import { textesQueries, typesActeQueries } from "@/lib/supabase-queries";
+import { actesQueries, typesActeQueries } from "@/lib/actes-queries";
 
 const texteSchema = z.object({
   type_acte: z.string().min(1, "Type d'acte requis"),
@@ -71,8 +71,8 @@ export default function TexteForm() {
   });
 
   const { data: texte } = useQuery({
-    queryKey: ["texte", id],
-    queryFn: () => textesQueries.getById(id!),
+    queryKey: ["acte", id],
+    queryFn: () => actesQueries.getById(id!),
     enabled: isEdit,
   });
 
@@ -130,20 +130,20 @@ export default function TexteForm() {
   const saveMutation = useMutation({
     mutationFn: async (data: any) => {
       if (isEdit) {
-        return await textesQueries.update(id!, data);
+        return await actesQueries.update(id!, data);
       } else {
-        return await textesQueries.create(data);
+        return await actesQueries.create(data);
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["textes-reglementaires"] });
+      queryClient.invalidateQueries({ queryKey: ["actes-reglementaires"] });
       toast({
-        title: isEdit ? "Texte modifié" : "Texte créé",
-        description: isEdit
-          ? "Le texte a été mis à jour avec succès"
-          : "Le nouveau texte a été créé avec succès",
-      });
-      navigate("/textes");
+            title: isEdit ? "Acte modifié" : "Acte créé",
+            description: isEdit
+              ? "L'acte a été mis à jour avec succès"
+              : "Le nouvel acte a été créé avec succès",
+          });
+          navigate("/actes");
     },
     onError: (error: any) => {
       toast({
@@ -199,15 +199,15 @@ export default function TexteForm() {
     <div className="space-y-6">
       {/* En-tête */}
       <div className="flex items-center gap-4">
-        <Button variant="outline" size="icon" onClick={() => navigate("/textes")}>
+        <Button variant="outline" size="icon" onClick={() => navigate("/actes")}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
-            {isEdit ? "Éditer un texte" : "Créer un texte réglementaire"}
+            {isEdit ? "Éditer un acte" : "Créer un acte réglementaire"}
           </h1>
           <p className="text-muted-foreground text-sm">
-            {isEdit ? "Modifier les informations du texte" : "Ajouter un nouveau texte à la base"}
+            {isEdit ? "Modifier les informations de l'acte" : "Ajouter un nouvel acte à la base"}
           </p>
         </div>
       </div>
@@ -216,7 +216,7 @@ export default function TexteForm() {
         {/* Identification */}
         <Card className="shadow-medium">
           <CardHeader>
-            <CardTitle>Identification du texte</CardTitle>
+            <CardTitle>Identification de l'acte</CardTitle>
             <CardDescription>Informations principales</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

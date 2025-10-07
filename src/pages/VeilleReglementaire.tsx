@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 import { AlertBadge } from "@/components/AlertBadge";
 import { useQuery } from "@tanstack/react-query";
-import { textesQueries } from "@/lib/supabase-queries";
+import { actesQueries } from "@/lib/actes-queries";
 
 export default function VeilleReglementaire() {
   const navigate = useNavigate();
@@ -35,11 +35,11 @@ export default function VeilleReglementaire() {
   const [domaineFilter, setDomaineFilter] = useState<string>("all");
   const [statutFilter, setStatutFilter] = useState<string>("all");
 
-  // Fetch textes réglementaires
+  // Fetch actes réglementaires
   const { data: textes, isLoading } = useQuery({
-    queryKey: ["veille-textes", searchTerm, domaineFilter, statutFilter],
+    queryKey: ["veille-actes", searchTerm, domaineFilter, statutFilter],
     queryFn: () =>
-      textesQueries.getAll({
+      actesQueries.getAll({
         searchTerm,
         statutFilter: statutFilter !== "all" ? statutFilter : undefined,
       }),
@@ -104,17 +104,17 @@ export default function VeilleReglementaire() {
         <div className="flex gap-2">
           <Button
             variant="outline"
-            onClick={() => navigate("/textes")}
+            onClick={() => navigate("/actes")}
           >
             <BookOpen className="h-4 w-4 mr-2" />
-            Gérer les textes
+            Gérer les actes
           </Button>
           <Button
             className="bg-gradient-primary shadow-medium"
-            onClick={() => navigate("/textes/nouveau")}
+            onClick={() => navigate("/actes/nouveau")}
           >
             <Plus className="h-4 w-4 mr-2" />
-            Ajouter un texte
+            Ajouter un acte
           </Button>
         </div>
       </div>
@@ -169,7 +169,7 @@ export default function VeilleReglementaire() {
               <TrendingUp className="h-4 w-4 text-success" />
             </div>
             <div className="text-3xl font-bold text-primary">{totalTextes}</div>
-            <p className="text-sm text-muted-foreground mt-1">Textes suivis</p>
+            <p className="text-sm text-muted-foreground mt-1">Actes suivis</p>
           </CardContent>
         </Card>
 
@@ -254,10 +254,10 @@ export default function VeilleReglementaire() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
             <FileText className="h-5 w-5 text-primary" />
-            Textes réglementaires
+            Actes réglementaires
           </CardTitle>
           <CardDescription className="text-sm">
-            {filteredTextes?.length || 0} texte(s) trouvé(s)
+            {filteredTextes?.length || 0} acte(s) trouvé(s)
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -273,7 +273,7 @@ export default function VeilleReglementaire() {
                     <div
                       key={texte.id}
                       className="p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors cursor-pointer"
-                      onClick={() => navigate(`/textes/${texte.id}`)}
+                      onClick={() => navigate(`/actes/${texte.id}`)}
                     >
                       <div className="space-y-3">
                         <div>
@@ -340,7 +340,7 @@ export default function VeilleReglementaire() {
                         <TableRow
                           key={texte.id}
                           className="hover:bg-muted/50 cursor-pointer"
-                          onClick={() => navigate(`/textes/${texte.id}`)}
+                          onClick={() => navigate(`/actes/${texte.id}`)}
                         >
                           <TableCell className="font-medium">
                             {texte.numero_officiel}
@@ -398,7 +398,7 @@ export default function VeilleReglementaire() {
                                 size="sm"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  navigate(`/textes/${texte.id}`);
+                                  navigate(`/actes/${texte.id}`);
                                 }}
                               >
                                 <Eye className="h-4 w-4" />

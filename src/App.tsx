@@ -38,6 +38,11 @@ const App = () => (
                 <Route path="/clients/:id" element={<ClientDetail />} />
                 <Route path="/sites" element={<Sites />} />
                 <Route path="/sites/:id" element={<SiteDetail />} />
+                <Route path="/actes" element={<TextesReglementaires />} />
+                <Route path="/actes/nouveau" element={<TexteForm />} />
+                <Route path="/actes/:id" element={<TexteDetail />} />
+                <Route path="/actes/:id/editer" element={<TexteForm />} />
+                {/* Legacy routes for backward compatibility */}
                 <Route path="/textes" element={<TextesReglementaires />} />
                 <Route path="/textes/nouveau" element={<TexteForm />} />
                 <Route path="/textes/:id" element={<TexteDetail />} />

@@ -8,15 +8,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Trash2, Save, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { articlesQueries } from "@/lib/supabase-queries";
-import type { Article } from "@/types/textes";
+import { articlesQueries } from "@/lib/actes-queries";
+import type { Article } from "@/types/actes";
 
 interface ArticleManagerProps {
-  texteId: string;
+  acteId: string;
   articles: Article[];
 }
 
-export function ArticleManager({ texteId, articles }: ArticleManagerProps) {
+export function ArticleManager({ acteId, articles }: ArticleManagerProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState<string | null>(null);
@@ -33,9 +33,9 @@ export function ArticleManager({ texteId, articles }: ArticleManagerProps) {
 
   const createMutation = useMutation({
     mutationFn: (article: Partial<Article>) =>
-      articlesQueries.create({ ...article, texte_id: texteId }),
+      articlesQueries.create({ ...article, acte_id: acteId }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["articles", texteId] });
+      queryClient.invalidateQueries({ queryKey: ["articles", acteId] });
       toast({ title: "Article ajouté", description: "L'article a été ajouté avec succès" });
       resetForm();
     },
@@ -51,7 +51,7 @@ export function ArticleManager({ texteId, articles }: ArticleManagerProps) {
   const bulkCreateMutation = useMutation({
     mutationFn: (articles: Partial<Article>[]) => articlesQueries.createBulk(articles),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["articles", texteId] });
+      queryClient.invalidateQueries({ queryKey: ["articles", acteId] });
       toast({
         title: "Articles ajoutés",
         description: `${data.length} article(s) ajouté(s) avec succès`,
@@ -72,7 +72,7 @@ export function ArticleManager({ texteId, articles }: ArticleManagerProps) {
     mutationFn: ({ id, article }: { id: string; article: Partial<Article> }) =>
       articlesQueries.update(id, article),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["articles", texteId] });
+      queryClient.invalidateQueries({ queryKey: ["articles", acteId] });
       toast({ title: "Article modifié", description: "L'article a été mis à jour avec succès" });
       setEditing(null);
     },
@@ -88,7 +88,7 @@ export function ArticleManager({ texteId, articles }: ArticleManagerProps) {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => articlesQueries.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["articles", texteId] });
+      queryClient.invalidateQueries({ queryKey: ["articles", acteId] });
       toast({ title: "Article supprimé", description: "L'article a été supprimé avec succès" });
     },
     onError: (error: any) => {
@@ -145,7 +145,7 @@ export function ArticleManager({ texteId, articles }: ArticleManagerProps) {
       const match = line.match(/^Article\s+(\d+)\s*:?\s*(.+)$/i);
       if (match) {
         parsedArticles.push({
-          texte_id: texteId,
+          acte_id: acteId,
           numero: match[1],
           contenu_fr: match[2].trim(),
         });
