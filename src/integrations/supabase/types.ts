@@ -24,6 +24,7 @@ export type Database = {
           date_publication: string | null
           date_publication_jort: string | null
           date_signature: string | null
+          deleted_at: string | null
           domaine: Database["public"]["Enums"]["domaine_reglementaire"]
           domaines: string[] | null
           id: string
@@ -38,6 +39,7 @@ export type Database = {
           numero_officiel: string | null
           objet_resume: string | null
           reference: string
+          reference_officielle: string | null
           resume: string | null
           source: string | null
           statut: Database["public"]["Enums"]["statut_texte"] | null
@@ -57,6 +59,7 @@ export type Database = {
           date_publication?: string | null
           date_publication_jort?: string | null
           date_signature?: string | null
+          deleted_at?: string | null
           domaine: Database["public"]["Enums"]["domaine_reglementaire"]
           domaines?: string[] | null
           id?: string
@@ -71,6 +74,7 @@ export type Database = {
           numero_officiel?: string | null
           objet_resume?: string | null
           reference: string
+          reference_officielle?: string | null
           resume?: string | null
           source?: string | null
           statut?: Database["public"]["Enums"]["statut_texte"] | null
@@ -90,6 +94,7 @@ export type Database = {
           date_publication?: string | null
           date_publication_jort?: string | null
           date_signature?: string | null
+          deleted_at?: string | null
           domaine?: Database["public"]["Enums"]["domaine_reglementaire"]
           domaines?: string[] | null
           id?: string
@@ -104,6 +109,7 @@ export type Database = {
           numero_officiel?: string | null
           objet_resume?: string | null
           reference?: string
+          reference_officielle?: string | null
           resume?: string | null
           source?: string | null
           statut?: Database["public"]["Enums"]["statut_texte"] | null
@@ -249,10 +255,13 @@ export type Database = {
           contenu_ar: string | null
           contenu_fr: string | null
           created_at: string | null
+          deleted_at: string | null
           exigences: string[] | null
           id: string
           notes: string | null
           numero: string
+          ordre: number | null
+          reference_article: string | null
           resume_article: string | null
           titre_court: string | null
           updated_at: string | null
@@ -262,10 +271,13 @@ export type Database = {
           contenu_ar?: string | null
           contenu_fr?: string | null
           created_at?: string | null
+          deleted_at?: string | null
           exigences?: string[] | null
           id?: string
           notes?: string | null
           numero: string
+          ordre?: number | null
+          reference_article?: string | null
           resume_article?: string | null
           titre_court?: string | null
           updated_at?: string | null
@@ -275,10 +287,13 @@ export type Database = {
           contenu_ar?: string | null
           contenu_fr?: string | null
           created_at?: string | null
+          deleted_at?: string | null
           exigences?: string[] | null
           id?: string
           notes?: string | null
           numero?: string
+          ordre?: number | null
+          reference_article?: string | null
           resume_article?: string | null
           titre_court?: string | null
           updated_at?: string | null
@@ -289,6 +304,93 @@ export type Database = {
             columns: ["acte_id"]
             isOneToOne: false
             referencedRelation: "actes_reglementaires"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      articles_sous_domaines: {
+        Row: {
+          article_id: string
+          created_at: string | null
+          sous_domaine_id: string
+        }
+        Insert: {
+          article_id: string
+          created_at?: string | null
+          sous_domaine_id: string
+        }
+        Update: {
+          article_id?: string
+          created_at?: string | null
+          sous_domaine_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "articles_sous_domaines_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "articles_sous_domaines_sous_domaine_id_fkey"
+            columns: ["sous_domaine_id"]
+            isOneToOne: false
+            referencedRelation: "sous_domaines_application"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      articles_versions: {
+        Row: {
+          article_id: string
+          contenu: string
+          created_at: string | null
+          date_effet: string | null
+          deleted_at: string | null
+          id: string
+          remplace_version_id: string | null
+          statut_vigueur: Database["public"]["Enums"]["statut_vigueur"] | null
+          updated_at: string | null
+          version_label: string
+        }
+        Insert: {
+          article_id: string
+          contenu: string
+          created_at?: string | null
+          date_effet?: string | null
+          deleted_at?: string | null
+          id?: string
+          remplace_version_id?: string | null
+          statut_vigueur?: Database["public"]["Enums"]["statut_vigueur"] | null
+          updated_at?: string | null
+          version_label: string
+        }
+        Update: {
+          article_id?: string
+          contenu?: string
+          created_at?: string | null
+          date_effet?: string | null
+          deleted_at?: string | null
+          id?: string
+          remplace_version_id?: string | null
+          statut_vigueur?: Database["public"]["Enums"]["statut_vigueur"] | null
+          updated_at?: string | null
+          version_label?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "articles_versions_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "articles_versions_remplace_version_id_fkey"
+            columns: ["remplace_version_id"]
+            isOneToOne: false
+            referencedRelation: "articles_versions"
             referencedColumns: ["id"]
           },
         ]
@@ -416,6 +518,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      domaines_application: {
+        Row: {
+          actif: boolean | null
+          code: string
+          created_at: string | null
+          deleted_at: string | null
+          id: string
+          libelle: string
+          updated_at: string | null
+        }
+        Insert: {
+          actif?: boolean | null
+          code: string
+          created_at?: string | null
+          deleted_at?: string | null
+          id?: string
+          libelle: string
+          updated_at?: string | null
+        }
+        Update: {
+          actif?: boolean | null
+          code?: string
+          created_at?: string | null
+          deleted_at?: string | null
+          id?: string
+          libelle?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       lectures_validations: {
         Row: {
@@ -748,6 +880,50 @@ export type Database = {
           },
         ]
       }
+      sous_domaines_application: {
+        Row: {
+          actif: boolean | null
+          code: string
+          created_at: string | null
+          deleted_at: string | null
+          domaine_id: string
+          id: string
+          libelle: string
+          ordre: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          actif?: boolean | null
+          code: string
+          created_at?: string | null
+          deleted_at?: string | null
+          domaine_id: string
+          id?: string
+          libelle: string
+          ordre?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          actif?: boolean | null
+          code?: string
+          created_at?: string | null
+          deleted_at?: string | null
+          domaine_id?: string
+          id?: string
+          libelle?: string
+          ordre?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sous_domaines_application_domaine_id_fkey"
+            columns: ["domaine_id"]
+            isOneToOne: false
+            referencedRelation: "domaines_application"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       structures_code: {
         Row: {
           acte_id: string
@@ -792,6 +968,72 @@ export type Database = {
             columns: ["parent_id"]
             isOneToOne: false
             referencedRelation: "structures_code"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      textes_domaines: {
+        Row: {
+          created_at: string | null
+          domaine_id: string
+          texte_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          domaine_id: string
+          texte_id: string
+        }
+        Update: {
+          created_at?: string | null
+          domaine_id?: string
+          texte_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "textes_domaines_domaine_id_fkey"
+            columns: ["domaine_id"]
+            isOneToOne: false
+            referencedRelation: "domaines_application"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "textes_domaines_texte_id_fkey"
+            columns: ["texte_id"]
+            isOneToOne: false
+            referencedRelation: "actes_reglementaires"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      textes_sous_domaines: {
+        Row: {
+          created_at: string | null
+          sous_domaine_id: string
+          texte_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          sous_domaine_id: string
+          texte_id: string
+        }
+        Update: {
+          created_at?: string | null
+          sous_domaine_id?: string
+          texte_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "textes_sous_domaines_sous_domaine_id_fkey"
+            columns: ["sous_domaine_id"]
+            isOneToOne: false
+            referencedRelation: "sous_domaines_application"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "textes_sous_domaines_texte_id_fkey"
+            columns: ["texte_id"]
+            isOneToOne: false
+            referencedRelation: "actes_reglementaires"
             referencedColumns: ["id"]
           },
         ]
