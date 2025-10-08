@@ -101,3 +101,39 @@ export interface ChangelogEntry {
   date_changement: string;
   created_at: string;
 }
+
+export interface DomaineApplication {
+  id: string;
+  code: string;
+  libelle: string;
+  actif: boolean;
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string;
+}
+
+export interface SousDomaineApplication {
+  id: string;
+  domaine_id: string;
+  code: string;
+  libelle: string;
+  actif: boolean;
+  ordre: number;
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string;
+  domaine?: DomaineApplication;
+}
+
+export interface ArticleVersion {
+  id: string;
+  article_id: string;
+  version_label: string;
+  contenu: string;
+  date_effet?: string;
+  statut_vigueur: StatutVigueur;
+  remplace_version_id?: string;
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string;
+}
