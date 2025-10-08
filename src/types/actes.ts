@@ -30,10 +30,33 @@ export interface TypeActeRow {
   created_at: string;
 }
 
+export interface DomaineApplication {
+  id: string;
+  code: string;
+  libelle: string;
+  actif: boolean;
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string;
+}
+
+export interface SousDomaineApplication {
+  id: string;
+  domaine_id: string;
+  code: string;
+  libelle: string;
+  actif: boolean;
+  ordre: number;
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string;
+}
+
 export interface ActeReglementaire {
   id: string;
   type_acte: TypeActe;
   numero_officiel?: string;
+  reference_officielle?: string;
   annee?: number;
   date_signature?: string;
   date_publication_jort?: string;
@@ -49,11 +72,13 @@ export interface ActeReglementaire {
   langue_disponible?: string;
   url_pdf_ar?: string;
   url_pdf_fr?: string;
+  lien_pdf?: string;
   notes_editoriales?: string;
   date_entree_vigueur_effective?: string;
   created_at: string;
   updated_at: string;
   created_by?: string;
+  deleted_at?: string;
   types_acte?: TypeActeRow;
 }
 
@@ -61,12 +86,28 @@ export interface Article {
   id: string;
   acte_id: string;
   numero: string;
+  reference_article?: string;
   titre_court?: string;
+  ordre: number;
   contenu_ar?: string;
   contenu_fr?: string;
   notes?: string;
   created_at: string;
   updated_at: string;
+  deleted_at?: string;
+}
+
+export interface ArticleVersion {
+  id: string;
+  article_id: string;
+  version_label: string;
+  contenu: string;
+  date_effet?: string;
+  statut_vigueur: StatutVigueur;
+  remplace_version_id?: string;
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string;
 }
 
 export interface StructureCode {
@@ -100,40 +141,4 @@ export interface ChangelogEntry {
   resume: string;
   date_changement: string;
   created_at: string;
-}
-
-export interface DomaineApplication {
-  id: string;
-  code: string;
-  libelle: string;
-  actif: boolean;
-  created_at: string;
-  updated_at: string;
-  deleted_at?: string;
-}
-
-export interface SousDomaineApplication {
-  id: string;
-  domaine_id: string;
-  code: string;
-  libelle: string;
-  actif: boolean;
-  ordre: number;
-  created_at: string;
-  updated_at: string;
-  deleted_at?: string;
-  domaine?: DomaineApplication;
-}
-
-export interface ArticleVersion {
-  id: string;
-  article_id: string;
-  version_label: string;
-  contenu: string;
-  date_effet?: string;
-  statut_vigueur: StatutVigueur;
-  remplace_version_id?: string;
-  created_at: string;
-  updated_at: string;
-  deleted_at?: string;
 }

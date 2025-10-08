@@ -21,7 +21,8 @@ export const actesQueries = {
   }) {
     let query = (supabase as any)
       .from("actes_reglementaires")
-      .select("*, types_acte(code, libelle)")
+      .select("*")
+      .is("deleted_at", null)
       .order("date_publication_jort", { ascending: false });
 
     if (filters?.searchTerm) {
@@ -44,8 +45,9 @@ export const actesQueries = {
   async getById(id: string) {
     const { data, error } = await (supabase as any)
       .from("actes_reglementaires")
-      .select("*, types_acte(code, libelle)")
+      .select("*")
       .eq("id", id)
+      .is("deleted_at", null)
       .maybeSingle();
     if (error) throw error;
     return data as ActeReglementaire | null;
@@ -123,7 +125,8 @@ export const articlesQueries = {
       .from("articles")
       .select("*")
       .eq("acte_id", acteId)
-      .order("numero");
+      .is("deleted_at", null)
+      .order("ordre");
     if (error) throw error;
     return data as Article[];
   },
