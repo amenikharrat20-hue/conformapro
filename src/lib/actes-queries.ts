@@ -18,28 +18,68 @@ export const actesQueries = {
     searchTerm?: string;
     typeFilter?: string;
     statutFilter?: string;
+    domaineFilter?: string;
+    sousDomaineFilter?: string;
+    anneeFilter?: string;
+    autoriteFilter?: string;
+    page?: number;
+    pageSize?: number;
+    sortBy?: string;
+    sortOrder?: "asc" | "desc";
   }) {
+    const page = filters?.page || 1;
+    const pageSize = filters?.pageSize || 25;
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+
     let query = (supabase as any)
       .from("actes_reglementaires")
-      .select("*")
-      .is("deleted_at", null)
-      .order("date_publication_jort", { ascending: false });
+      .select("*, articles(count)", { count: "exact" })
+      .is("deleted_at", null);
 
+    // Search across multiple fields
     if (filters?.searchTerm) {
       query = query.or(
-        `intitule.ilike.%${filters.searchTerm}%,numero_officiel.ilike.%${filters.searchTerm}%,objet_resume.ilike.%${filters.searchTerm}%`
+        `intitule.ilike.%${filters.searchTerm}%,reference_officielle.ilike.%${filters.searchTerm}%,autorite_emettrice.ilike.%${filters.searchTerm}%,resume.ilike.%${filters.searchTerm}%,numero_officiel.ilike.%${filters.searchTerm}%`
       );
     }
+
     if (filters?.typeFilter && filters.typeFilter !== "all") {
       query = query.eq("type_acte", filters.typeFilter);
     }
+
     if (filters?.statutFilter && filters.statutFilter !== "all") {
       query = query.eq("statut_vigueur", filters.statutFilter);
     }
 
-    const { data, error } = await query;
+    if (filters?.anneeFilter && filters.anneeFilter !== "all") {
+      const annee = parseInt(filters.anneeFilter);
+      query = query.gte("date_publication_jort", `${annee}-01-01`)
+        .lte("date_publication_jort", `${annee}-12-31`);
+    }
+
+    if (filters?.autoriteFilter && filters.autoriteFilter !== "all") {
+      query = query.eq("autorite_emettrice", filters.autoriteFilter);
+    }
+
+    // Sorting
+    const sortBy = filters?.sortBy || "date_publication_jort";
+    const sortOrder = filters?.sortOrder || "desc";
+    query = query.order(sortBy, { ascending: sortOrder === "asc" });
+
+    // Pagination
+    query = query.range(from, to);
+
+    const { data, error, count } = await query;
     if (error) throw error;
-    return data as ActeReglementaire[];
+    
+    return { 
+      data: data as ActeReglementaire[], 
+      count: count || 0,
+      page,
+      pageSize,
+      totalPages: Math.ceil((count || 0) / pageSize)
+    };
   },
 
   async getById(id: string) {

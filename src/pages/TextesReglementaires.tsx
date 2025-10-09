@@ -24,7 +24,7 @@ export default function TextesReglementaires() {
     queryFn: () => typesActeQueries.getAll(),
   });
 
-  const { data: textes, isLoading } = useQuery({
+  const { data: result, isLoading } = useQuery({
     queryKey: ["actes-reglementaires", searchTerm, typeFilter, statutFilter],
     queryFn: () =>
       actesQueries.getAll({
@@ -33,6 +33,8 @@ export default function TextesReglementaires() {
         statutFilter,
       }),
   });
+
+  const textes = result?.data || [];
 
   const annees = Array.from({ length: 30 }, (_, i) => (new Date().getFullYear() - i).toString());
 
@@ -95,7 +97,7 @@ export default function TextesReglementaires() {
               <FileText className="h-5 w-5 text-primary" />
             </div>
             <div className="text-3xl font-bold text-primary">
-              {textes?.length || 0}
+              {result?.count || 0}
             </div>
             <p className="text-sm text-muted-foreground mt-1">Actes totaux</p>
           </CardContent>
@@ -104,7 +106,7 @@ export default function TextesReglementaires() {
         <Card className="shadow-soft border-l-4 border-l-success">
           <CardContent className="pt-6">
             <div className="text-3xl font-bold text-success">
-              {textes?.filter((t) => t.statut_vigueur === "en_vigueur").length || 0}
+              {textes.filter((t) => t.statut_vigueur === "en_vigueur").length || 0}
             </div>
             <p className="text-sm text-muted-foreground mt-1">En vigueur</p>
           </CardContent>
@@ -113,7 +115,7 @@ export default function TextesReglementaires() {
         <Card className="shadow-soft border-l-4 border-l-warning">
           <CardContent className="pt-6">
             <div className="text-3xl font-bold text-warning">
-              {textes?.filter((t) => t.statut_vigueur === "modifie").length || 0}
+              {textes.filter((t) => t.statut_vigueur === "modifie").length || 0}
             </div>
             <p className="text-sm text-muted-foreground mt-1">Modifiés</p>
           </CardContent>
@@ -122,7 +124,7 @@ export default function TextesReglementaires() {
         <Card className="shadow-soft border-l-4 border-l-destructive">
           <CardContent className="pt-6">
             <div className="text-3xl font-bold text-destructive">
-              {textes?.filter((t) => t.statut_vigueur === "abroge").length || 0}
+              {textes.filter((t) => t.statut_vigueur === "abroge").length || 0}
             </div>
             <p className="text-sm text-muted-foreground mt-1">Abrogés</p>
           </CardContent>
@@ -196,7 +198,7 @@ export default function TextesReglementaires() {
             Liste des actes réglementaires
           </CardTitle>
           <CardDescription>
-            {textes?.length || 0} acte(s) trouvé(s)
+            {result?.count || 0} acte(s) trouvé(s)
           </CardDescription>
         </CardHeader>
         <CardContent>

@@ -36,7 +36,7 @@ export default function VeilleReglementaire() {
   const [statutFilter, setStatutFilter] = useState<string>("all");
 
   // Fetch actes réglementaires
-  const { data: textes, isLoading } = useQuery({
+  const { data: result, isLoading } = useQuery({
     queryKey: ["veille-actes", searchTerm, domaineFilter, statutFilter],
     queryFn: () =>
       actesQueries.getAll({
@@ -45,8 +45,10 @@ export default function VeilleReglementaire() {
       }),
   });
 
+  const textes = result?.data || [];
+  
   // Filter by domaine (client-side since domaines is an array)
-  const filteredTextes = textes?.filter((texte) => {
+  const filteredTextes = textes.filter((texte) => {
     if (domaineFilter === "all") return true;
     return texte.domaines?.includes(domaineFilter);
   });
