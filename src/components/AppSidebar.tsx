@@ -1,5 +1,6 @@
-import { LayoutDashboard, FileText, ClipboardCheck, AlertTriangle, ShieldCheck, GraduationCap, HardHat, Users, FileCheck, BookOpen, Menu, Building2, Factory } from "lucide-react";
+import { LayoutDashboard, FileText, ClipboardCheck, AlertTriangle, ShieldCheck, GraduationCap, HardHat, Users, FileCheck, BookOpen, Menu, Building2, Factory, Library, ChevronDown } from "lucide-react";
 import { NavLink } from "react-router-dom";
+import { useState } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -9,16 +10,43 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
+import {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+} from "@/components/ui/collapsible";
 
-const menuItems = [
+interface SubMenuItem {
+  title: string;
+  url: string;
+}
+
+interface MenuItem {
+  title: string;
+  url?: string;
+  icon: any;
+  subItems?: SubMenuItem[];
+}
+
+const menuItems: MenuItem[] = [
   { title: "Tableau de bord", url: "/", icon: LayoutDashboard },
   { title: "Clients", url: "/clients", icon: Building2 },
   { title: "Sites", url: "/sites", icon: Factory },
   { title: "Actes réglementaires", url: "/actes", icon: BookOpen },
-  { title: "Veille réglementaire", url: "/veille", icon: FileText },
+  { 
+    title: "Veille réglementaire", 
+    url: "/veille", 
+    icon: FileText,
+    subItems: [
+      { title: "Bibliothèque", url: "/veille/bibliotheque" }
+    ]
+  },
   { title: "Dossier réglementaire", url: "/dossier", icon: FileCheck },
   { title: "Contrôles techniques", url: "/controles", icon: ClipboardCheck },
   { title: "Incidents HSE", url: "/incidents", icon: AlertTriangle },
@@ -32,6 +60,13 @@ const menuItems = [
 export function AppSidebar() {
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
+  const [openItems, setOpenItems] = useState<string[]>([]);
+
+  const toggleItem = (title: string) => {
+    setOpenItems((prev) =>
+      prev.includes(title) ? prev.filter((t) => t !== title) : [...prev, title]
+    );
+  };
 
   return (
     <Sidebar className={isCollapsed ? "w-14" : "w-64"} collapsible="icon">
@@ -53,22 +88,73 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      end
-                      className={({ isActive }) =>
-                        isActive
-                          ? "bg-sidebar-accent text-sidebar-primary font-medium"
-                          : "hover:bg-sidebar-accent/50"
-                      }
-                    >
-                      <item.icon className="h-4 w-4" />
-                      {!isCollapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                <Collapsible
+                  key={item.title}
+                  open={openItems.includes(item.title)}
+                  onOpenChange={() => toggleItem(item.title)}
+                >
+                  <SidebarMenuItem>
+                    {item.subItems && item.subItems.length > 0 ? (
+                      <>
+                        <CollapsibleTrigger asChild>
+                          <SidebarMenuButton
+                            onClick={() => {
+                              if (item.url) {
+                                // Navigate to parent URL if it exists
+                                window.location.href = item.url;
+                              }
+                            }}
+                          >
+                            <item.icon className="h-4 w-4" />
+                            {!isCollapsed && (
+                              <>
+                                <span>{item.title}</span>
+                                <ChevronDown className="ml-auto h-4 w-4 transition-transform" />
+                              </>
+                            )}
+                          </SidebarMenuButton>
+                        </CollapsibleTrigger>
+                        {!isCollapsed && (
+                          <CollapsibleContent>
+                            <SidebarMenuSub>
+                              {item.subItems.map((subItem) => (
+                                <SidebarMenuSubItem key={subItem.url}>
+                                  <SidebarMenuSubButton asChild>
+                                    <NavLink
+                                      to={subItem.url}
+                                      className={({ isActive }) =>
+                                        isActive
+                                          ? "bg-sidebar-accent text-sidebar-primary font-medium"
+                                          : "hover:bg-sidebar-accent/50"
+                                      }
+                                    >
+                                      <span>{subItem.title}</span>
+                                    </NavLink>
+                                  </SidebarMenuSubButton>
+                                </SidebarMenuSubItem>
+                              ))}
+                            </SidebarMenuSub>
+                          </CollapsibleContent>
+                        )}
+                      </>
+                    ) : (
+                      <SidebarMenuButton asChild>
+                        <NavLink
+                          to={item.url!}
+                          end
+                          className={({ isActive }) =>
+                            isActive
+                              ? "bg-sidebar-accent text-sidebar-primary font-medium"
+                              : "hover:bg-sidebar-accent/50"
+                          }
+                        >
+                          <item.icon className="h-4 w-4" />
+                          {!isCollapsed && <span>{item.title}</span>}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    )}
+                  </SidebarMenuItem>
+                </Collapsible>
               ))}
             </SidebarMenu>
           </SidebarGroupContent>
