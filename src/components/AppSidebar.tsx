@@ -46,7 +46,8 @@ const menuItems: MenuItem[] = [
     subItems: [
       { title: "Bibliothèque", url: "/veille/bibliotheque" },
       { title: "Évaluation de conformité", url: "/veille/conformite" },
-      { title: "Plan d'action", url: "/veille/actions" }
+      { title: "Plan d'action", url: "/veille/actions" },
+      { title: "Gestion des domaines", url: "/veille/domaines" }
     ]
   },
   { title: "Dossier réglementaire", url: "/dossier", icon: FileCheck },
