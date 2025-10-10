@@ -44,7 +44,9 @@ const menuItems: MenuItem[] = [
     url: "/veille", 
     icon: FileText,
     subItems: [
-      { title: "Bibliothèque", url: "/veille/bibliotheque" }
+      { title: "Bibliothèque", url: "/veille/bibliotheque" },
+      { title: "Évaluation de conformité", url: "/veille/conformite" },
+      { title: "Plan d'action", url: "/veille/actions" }
     ]
   },
   { title: "Dossier réglementaire", url: "/dossier", icon: FileCheck },

@@ -15,6 +15,8 @@ import BibliothequeTextes from "./pages/BibliothequeTextes";
 import BibliothequeTexteDetail from "./pages/BibliothequeTexteDetail";
 import BibliothequeTexteArticles from "./pages/BibliothequeTexteArticles";
 import BibliothequeArticleVersions from "./pages/BibliothequeArticleVersions";
+import ConformiteEvaluation from "./pages/ConformiteEvaluation";
+import PlanAction from "./pages/PlanAction";
 import DossierReglementaire from "./pages/DossierReglementaire";
 import ControlesTechniques from "./pages/ControlesTechniques";
 import Incidents from "./pages/Incidents";
@@ -56,6 +58,8 @@ const App = () => (
                 <Route path="/veille/bibliotheque/textes/:id" element={<BibliothequeTexteDetail />} />
                 <Route path="/veille/bibliotheque/textes/:id/articles" element={<BibliothequeTexteArticles />} />
                 <Route path="/veille/bibliotheque/articles/:articleId/versions" element={<BibliothequeArticleVersions />} />
+                <Route path="/veille/conformite" element={<ConformiteEvaluation />} />
+                <Route path="/veille/actions" element={<PlanAction />} />
                 <Route path="/dossier" element={<DossierReglementaire />} />
                 <Route path="/controles" element={<ControlesTechniques />} />
                 <Route path="/incidents" element={<Incidents />} />
