@@ -15,12 +15,14 @@ import {
   SidebarMenuSubButton,
   SidebarTrigger,
   useSidebar,
+  SidebarFooter,
 } from "@/components/ui/sidebar";
 import {
   Collapsible,
   CollapsibleTrigger,
   CollapsibleContent,
 } from "@/components/ui/collapsible";
+import { UserMenu } from "@/components/UserMenu";
 
 interface SubMenuItem {
   title: string;
@@ -163,6 +165,12 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
+      <SidebarFooter>
+        <div className="flex items-center justify-center p-2 border-t border-sidebar-border">
+          <UserMenu />
+        </div>
+      </SidebarFooter>
     </Sidebar>
   );
 }
