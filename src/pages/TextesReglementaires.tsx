@@ -6,66 +6,114 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Filter, Eye, FileText, Download } from "lucide-react";
+import { Plus, Search, Eye, FileText, Download, Upload, ChevronLeft, ChevronRight, Library } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { actesQueries, typesActeQueries } from "@/lib/actes-queries";
+import { actesQueries, domainesQueries, sousDomainesQueries } from "@/lib/actes-queries";
+
+const TYPE_LABELS: Record<string, string> = {
+  loi: "Loi",
+  loi_org: "Loi organique",
+  code: "Code",
+  decret_gouv: "Décret gouvernemental",
+  decret_pres: "Décret présidentiel",
+  decret_loi: "Décret-loi",
+  arrete: "Arrêté",
+  arrete_conjoint: "Arrêté conjoint",
+  circulaire: "Circulaire",
+  decision: "Décision",
+  rectificatif: "Rectificatif"
+};
 
 export default function TextesReglementaires() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
-  const [anneeFilter, setAnneeFilter] = useState<string>("all");
+  const [domaineFilter, setDomaineFilter] = useState<string>("all");
+  const [sousDomaineFilter, setSousDomaineFilter] = useState<string>("all");
   const [statutFilter, setStatutFilter] = useState<string>("all");
+  const [anneeFilter, setAnneeFilter] = useState<string>("all");
+  const [autoriteFilter, setAutoriteFilter] = useState<string>("all");
+  const [page, setPage] = useState(1);
+  const [sortBy, setSortBy] = useState("date_publication_jort");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const pageSize = 25;
 
-  const { data: typesActe } = useQuery({
-    queryKey: ["types-acte"],
-    queryFn: () => typesActeQueries.getAll(),
+  const { data: domainesList } = useQuery({
+    queryKey: ["domaines"],
+    queryFn: () => domainesQueries.getActive(),
+  });
+
+  const { data: sousDomainesList } = useQuery({
+    queryKey: ["sous-domaines", domaineFilter],
+    queryFn: () => domaineFilter !== "all" ? sousDomainesQueries.getActive(domaineFilter) : Promise.resolve([]),
+    enabled: domaineFilter !== "all",
   });
 
   const { data: result, isLoading } = useQuery({
-    queryKey: ["actes-reglementaires", searchTerm, typeFilter, statutFilter],
+    queryKey: ["actes-reglementaires", searchTerm, typeFilter, domaineFilter, sousDomaineFilter, statutFilter, anneeFilter, autoriteFilter, page, sortBy, sortOrder],
     queryFn: () =>
       actesQueries.getAll({
         searchTerm,
-        typeFilter,
-        statutFilter,
+        typeFilter: typeFilter !== "all" ? typeFilter : undefined,
+        statutFilter: statutFilter !== "all" ? statutFilter : undefined,
+        domaineFilter: domaineFilter !== "all" ? domaineFilter : undefined,
+        sousDomaineFilter: sousDomaineFilter !== "all" ? sousDomaineFilter : undefined,
+        anneeFilter: anneeFilter !== "all" ? anneeFilter : undefined,
+        autoriteFilter: autoriteFilter !== "all" ? autoriteFilter : undefined,
+        page,
+        pageSize,
+        sortBy,
+        sortOrder,
       }),
   });
 
   const textes = result?.data || [];
+  const totalCount = result?.count || 0;
+  const totalPages = result?.totalPages || 1;
 
-  const annees = Array.from({ length: 30 }, (_, i) => (new Date().getFullYear() - i).toString());
+  // Get unique years for filter
+  const uniqueYears = Array.from(
+    new Set(
+      textes
+        .map((t) => t.date_publication_jort ? new Date(t.date_publication_jort).getFullYear() : null)
+        .filter((y): y is number => y !== null)
+    )
+  ).sort((a, b) => b - a);
 
-  const getStatutBadgeColor = (statut: string) => {
+  // Get unique authorities for filter
+  const uniqueAutorites = Array.from(
+    new Set(
+      textes
+        .map((t) => t.autorite_emettrice)
+        .filter((a): a is string => !!a)
+    )
+  ).sort();
+
+  const getStatutBadge = (statut: string) => {
     switch (statut) {
       case "en_vigueur":
-        return "bg-success text-success-foreground";
+        return { label: "En vigueur", color: "bg-success text-success-foreground" };
       case "modifie":
-        return "bg-warning text-warning-foreground";
+        return { label: "Modifié", color: "bg-warning text-warning-foreground" };
       case "abroge":
-        return "bg-destructive text-destructive-foreground";
+        return { label: "Abrogé", color: "bg-destructive text-destructive-foreground" };
       case "suspendu":
-        return "bg-muted text-muted-foreground";
+        return { label: "Suspendu", color: "bg-secondary text-secondary-foreground" };
       default:
-        return "";
+        return { label: statut, color: "" };
     }
   };
 
-  const getStatutLabel = (statut: string) => {
-    switch (statut) {
-      case "en_vigueur":
-        return "En vigueur";
-      case "modifie":
-        return "Modifié";
-      case "abroge":
-        return "Abrogé";
-      case "suspendu":
-        return "Suspendu";
-      default:
-        return statut;
+  const handleSort = (column: string) => {
+    if (sortBy === column) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(column);
+      setSortOrder("desc");
     }
+    setPage(1);
   };
 
   return (
@@ -74,19 +122,30 @@ export default function TextesReglementaires() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
-            Actes réglementaires
+            Liste des textes réglementaires
           </h1>
           <p className="text-muted-foreground mt-2 text-sm sm:text-base">
-            Gestion de la base réglementaire tunisienne
+            Gestion et consultation de la base réglementaire tunisienne
           </p>
         </div>
-        <Button
-          className="bg-gradient-primary shadow-medium w-full sm:w-auto"
-          onClick={() => navigate("/actes/nouveau")}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Créer un acte
-        </Button>
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" size="sm">
+            <Upload className="h-4 w-4 mr-2" />
+            Importer CSV
+          </Button>
+          <Button variant="outline" size="sm">
+            <Download className="h-4 w-4 mr-2" />
+            Exporter PDF/Excel
+          </Button>
+          <Button
+            className="bg-gradient-primary shadow-medium"
+            size="sm"
+            onClick={() => navigate("/actes/nouveau")}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Créer un texte
+          </Button>
+        </div>
       </div>
 
       {/* Statistiques */}
@@ -97,16 +156,16 @@ export default function TextesReglementaires() {
               <FileText className="h-5 w-5 text-primary" />
             </div>
             <div className="text-3xl font-bold text-primary">
-              {result?.count || 0}
+              {totalCount}
             </div>
-            <p className="text-sm text-muted-foreground mt-1">Actes totaux</p>
+            <p className="text-sm text-muted-foreground mt-1">Textes totaux</p>
           </CardContent>
         </Card>
 
         <Card className="shadow-soft border-l-4 border-l-success">
           <CardContent className="pt-6">
             <div className="text-3xl font-bold text-success">
-              {textes.filter((t) => t.statut_vigueur === "en_vigueur").length || 0}
+              {textes.filter((t) => t.statut_vigueur === "en_vigueur").length}
             </div>
             <p className="text-sm text-muted-foreground mt-1">En vigueur</p>
           </CardContent>
@@ -115,7 +174,7 @@ export default function TextesReglementaires() {
         <Card className="shadow-soft border-l-4 border-l-warning">
           <CardContent className="pt-6">
             <div className="text-3xl font-bold text-warning">
-              {textes.filter((t) => t.statut_vigueur === "modifie").length || 0}
+              {textes.filter((t) => t.statut_vigueur === "modifie").length}
             </div>
             <p className="text-sm text-muted-foreground mt-1">Modifiés</p>
           </CardContent>
@@ -124,7 +183,7 @@ export default function TextesReglementaires() {
         <Card className="shadow-soft border-l-4 border-l-destructive">
           <CardContent className="pt-6">
             <div className="text-3xl font-bold text-destructive">
-              {textes.filter((t) => t.statut_vigueur === "abroge").length || 0}
+              {textes.filter((t) => t.statut_vigueur === "abroge").length}
             </div>
             <p className="text-sm text-muted-foreground mt-1">Abrogés</p>
           </CardContent>
@@ -138,44 +197,70 @@ export default function TextesReglementaires() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Rechercher par titre, numéro officiel, objet..."
+                placeholder="Rechercher par titre, référence officielle, autorité, résumé..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setPage(1);
+                }}
                 className="pl-10"
               />
             </div>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="w-full sm:w-[200px]">
-                  <SelectValue placeholder="Type d'acte" />
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+              <Select value={typeFilter} onValueChange={(val) => { setTypeFilter(val); setPage(1); }}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Type de texte" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tous les types</SelectItem>
-                  {typesActe?.map((type) => (
-                    <SelectItem key={type.code} value={type.code}>
-                      {type.libelle}
+                  {Object.entries(TYPE_LABELS).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
 
-              <Select value={anneeFilter} onValueChange={setAnneeFilter}>
-                <SelectTrigger className="w-full sm:w-[150px]">
-                  <SelectValue placeholder="Année" />
+              <Select value={domaineFilter} onValueChange={(val) => { 
+                setDomaineFilter(val); 
+                setSousDomaineFilter("all");
+                setPage(1); 
+              }}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Domaine" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Toutes les années</SelectItem>
-                  {annees.map((annee) => (
-                    <SelectItem key={annee} value={annee}>
-                      {annee}
+                  <SelectItem value="all">Tous les domaines</SelectItem>
+                  {domainesList?.map((domaine) => (
+                    <SelectItem key={domaine.id} value={domaine.id}>
+                      {domaine.libelle}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
 
-              <Select value={statutFilter} onValueChange={setStatutFilter}>
-                <SelectTrigger className="w-full sm:w-[200px]">
-                  <SelectValue placeholder="Statut" />
+              <Select 
+                value={sousDomaineFilter} 
+                onValueChange={(val) => { setSousDomaineFilter(val); setPage(1); }}
+                disabled={domaineFilter === "all"}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Sous-domaine" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous les sous-domaines</SelectItem>
+                  {sousDomainesList?.map((sd) => (
+                    <SelectItem key={sd.id} value={sd.id}>
+                      {sd.libelle}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={statutFilter} onValueChange={(val) => { setStatutFilter(val); setPage(1); }}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Statut de vigueur" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tous les statuts</SelectItem>
@@ -183,6 +268,34 @@ export default function TextesReglementaires() {
                   <SelectItem value="modifie">Modifié</SelectItem>
                   <SelectItem value="abroge">Abrogé</SelectItem>
                   <SelectItem value="suspendu">Suspendu</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={anneeFilter} onValueChange={(val) => { setAnneeFilter(val); setPage(1); }}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Année" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Toutes les années</SelectItem>
+                  {uniqueYears.map((year) => (
+                    <SelectItem key={year} value={String(year)}>
+                      {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={autoriteFilter} onValueChange={(val) => { setAutoriteFilter(val); setPage(1); }}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Autorité" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Toutes les autorités</SelectItem>
+                  {uniqueAutorites.map((autorite) => (
+                    <SelectItem key={autorite} value={autorite}>
+                      {autorite}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -193,98 +306,189 @@ export default function TextesReglementaires() {
       {/* Liste des textes */}
       <Card className="shadow-medium">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-primary" />
-            Liste des actes réglementaires
+          <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+            <Library className="h-5 w-5 text-primary" />
+            Textes réglementaires
           </CardTitle>
-          <CardDescription>
-            {result?.count || 0} acte(s) trouvé(s)
+          <CardDescription className="text-sm">
+            {totalCount} texte(s) trouvé(s) - Page {page} sur {totalPages}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <div className="text-center py-8 text-muted-foreground">Chargement...</div>
-          ) : textes && textes.length > 0 ? (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Numéro officiel</TableHead>
-                    <TableHead>Intitulé</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>JORT</TableHead>
-                    <TableHead>Statut</TableHead>
-                    <TableHead>PDF</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {textes.map((texte) => (
-                    <TableRow key={texte.id} className="hover:bg-muted/50">
-                      <TableCell className="font-medium">
-                        {texte.numero_officiel}
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium text-foreground">
-                            {texte.intitule}
-                          </div>
-                          {texte.objet_resume && (
-                            <div className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                              {texte.objet_resume}
-                            </div>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">
-                          {texte.types_acte?.libelle || texte.type_acte}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {texte.jort_numero && (
-                          <div>
-                            <div>JORT n° {texte.jort_numero}</div>
-                            {texte.date_publication_jort && (
-                              <div className="text-xs">
-                                {new Date(texte.date_publication_jort).toLocaleDateString("fr-TN")}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getStatutBadgeColor(texte.statut_vigueur)}>
-                          {getStatutLabel(texte.statut_vigueur)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          {texte.url_pdf_ar && (
-                            <Badge variant="outline" className="text-xs">AR</Badge>
-                          )}
-                          {texte.url_pdf_fr && (
-                            <Badge variant="outline" className="text-xs">FR</Badge>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
+          ) : textes.length > 0 ? (
+            <>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="cursor-pointer" onClick={() => handleSort("type_acte")}>
+                        Type {sortBy === "type_acte" && (sortOrder === "asc" ? "↑" : "↓")}
+                      </TableHead>
+                      <TableHead className="cursor-pointer" onClick={() => handleSort("reference_officielle")}>
+                        Référence {sortBy === "reference_officielle" && (sortOrder === "asc" ? "↑" : "↓")}
+                      </TableHead>
+                      <TableHead className="cursor-pointer" onClick={() => handleSort("intitule")}>
+                        Titre {sortBy === "intitule" && (sortOrder === "asc" ? "↑" : "↓")}
+                      </TableHead>
+                      <TableHead className="cursor-pointer" onClick={() => handleSort("autorite_emettrice")}>
+                        Autorité {sortBy === "autorite_emettrice" && (sortOrder === "asc" ? "↑" : "↓")}
+                      </TableHead>
+                      <TableHead className="cursor-pointer" onClick={() => handleSort("date_publication_jort")}>
+                        Date publication {sortBy === "date_publication_jort" && (sortOrder === "asc" ? "↑" : "↓")}
+                      </TableHead>
+                      <TableHead>Statut de vigueur</TableHead>
+                      <TableHead className="text-center">#Articles</TableHead>
+                      <TableHead>Domaines / Sous-domaines</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {textes.map((texte: any) => {
+                      const statutInfo = getStatutBadge(texte.statut_vigueur);
+                      const articleCount = texte.articles?.[0]?.count || 0;
+                      
+                      return (
+                        <TableRow
+                          key={texte.id}
+                          className="hover:bg-muted/50 cursor-pointer"
                           onClick={() => navigate(`/actes/${texte.id}`)}
                         >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                          <TableCell>
+                            <Badge variant="outline" className="text-xs">
+                              {TYPE_LABELS[texte.type_acte] || texte.type_acte}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {texte.reference_officielle || texte.numero_officiel || "—"}
+                          </TableCell>
+                          <TableCell>
+                            <div className="max-w-md">
+                              <div className="font-medium text-foreground line-clamp-1">
+                                {texte.intitule}
+                              </div>
+                              {texte.resume && (
+                                <div className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                                  {texte.resume}
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {texte.autorite_emettrice || "—"}
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {texte.date_publication_jort
+                              ? new Date(texte.date_publication_jort).toLocaleDateString("fr-TN")
+                              : "—"}
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={statutInfo.color}>
+                              {statutInfo.label}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-center text-sm font-medium">
+                            {articleCount}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-wrap gap-1 max-w-xs">
+                              {texte.domaines?.slice(0, 2).map((domaine: string, idx: number) => (
+                                <Badge key={idx} variant="outline" className="text-xs">
+                                  {domaine}
+                                </Badge>
+                              ))}
+                              {texte.domaines && texte.domaines.length > 2 && (
+                                <Badge variant="outline" className="text-xs">
+                                  +{texte.domaines.length - 2}
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/actes/${texte.id}`);
+                              }}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-4">
+                  <div className="text-sm text-muted-foreground">
+                    Affichage de {(page - 1) * pageSize + 1} à {Math.min(page * pageSize, totalCount)} sur {totalCount} textes
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage(page - 1)}
+                      disabled={page === 1}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      Précédent
+                    </Button>
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        let pageNum;
+                        if (totalPages <= 5) {
+                          pageNum = i + 1;
+                        } else if (page <= 3) {
+                          pageNum = i + 1;
+                        } else if (page >= totalPages - 2) {
+                          pageNum = totalPages - 4 + i;
+                        } else {
+                          pageNum = page - 2 + i;
+                        }
+                        
+                        return (
+                          <Button
+                            key={pageNum}
+                            variant={page === pageNum ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setPage(pageNum)}
+                          >
+                            {pageNum}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage(page + 1)}
+                      disabled={page === totalPages}
+                    >
+                      Suivant
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              Aucun acte réglementaire trouvé
+            <div className="text-center py-12">
+              <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Aucun texte réglementaire trouvé</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Commencez par créer votre premier texte réglementaire
+              </p>
+              <Button onClick={() => navigate("/actes/nouveau")}>
+                <Plus className="h-4 w-4 mr-2" />
+                Créer un texte
+              </Button>
             </div>
           )}
         </CardContent>
