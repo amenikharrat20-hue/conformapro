@@ -464,3 +464,105 @@ export const articleVersionsQueries = {
     if (error) throw error;
   },
 };
+
+// Relations textes-domaines
+export const textesDomainesQueries = {
+  async getByTexteId(texteId: string) {
+    const { data, error } = await (supabase as any)
+      .from("textes_domaines")
+      .select("*, domaine:domaines_application(*)")
+      .eq("texte_id", texteId);
+    if (error) throw error;
+    return data;
+  },
+
+  async createBulk(texteId: string, domaineIds: string[]) {
+    const relations = domaineIds.map(domaineId => ({
+      texte_id: texteId,
+      domaine_id: domaineId,
+    }));
+    
+    const { error } = await (supabase as any)
+      .from("textes_domaines")
+      .insert(relations);
+    if (error) throw error;
+  },
+
+  async deleteByTexteId(texteId: string) {
+    const { error } = await (supabase as any)
+      .from("textes_domaines")
+      .delete()
+      .eq("texte_id", texteId);
+    if (error) throw error;
+  },
+};
+
+// Relations textes-sous-domaines
+export const textesSousDomainesQueries = {
+  async getByTexteId(texteId: string) {
+    const { data, error } = await (supabase as any)
+      .from("textes_sous_domaines")
+      .select("*, sous_domaine:sous_domaines_application(*)")
+      .eq("texte_id", texteId);
+    if (error) throw error;
+    return data;
+  },
+
+  async createBulk(texteId: string, sousDomaineIds: string[]) {
+    if (sousDomaineIds.length === 0) return;
+    
+    const relations = sousDomaineIds.map(sousDomaineId => ({
+      texte_id: texteId,
+      sous_domaine_id: sousDomaineId,
+    }));
+    
+    const { error } = await (supabase as any)
+      .from("textes_sous_domaines")
+      .insert(relations);
+    if (error) throw error;
+  },
+
+  async deleteByTexteId(texteId: string) {
+    const { error } = await (supabase as any)
+      .from("textes_sous_domaines")
+      .delete()
+      .eq("texte_id", texteId);
+    if (error) throw error;
+  },
+};
+
+// Storage helpers for PDFs
+export const pdfStorageQueries = {
+  async uploadPdf(file: File, filename: string) {
+    const filePath = `${Date.now()}_${filename}`;
+    
+    const { data, error } = await supabase.storage
+      .from("textes_pdf")
+      .upload(filePath, file, {
+        cacheControl: "3600",
+        upsert: false,
+      });
+    
+    if (error) throw error;
+    
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from("textes_pdf")
+      .getPublicUrl(filePath);
+    
+    return publicUrl;
+  },
+
+  async deletePdf(url: string) {
+    // Extract file path from URL
+    const urlParts = url.split("/textes_pdf/");
+    if (urlParts.length < 2) return;
+    
+    const filePath = urlParts[1];
+    const { error } = await supabase.storage
+      .from("textes_pdf")
+      .remove([filePath]);
+    
+    if (error) console.error("Error deleting PDF:", error);
+  },
+};
