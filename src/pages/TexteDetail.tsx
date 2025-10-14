@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ArrowLeft, FileText, Download, Edit, ExternalLink } from "lucide-react";
 import { actesQueries, articlesQueries } from "@/lib/actes-queries";
-import { ArticleManager } from "@/components/ArticleManager";
+import { ArticlesTab } from "@/components/ArticlesTab";
 import { ChangelogManager } from "@/components/ChangelogManager";
 
 export default function TexteDetail() {
@@ -278,7 +278,7 @@ export default function TexteDetail() {
         </TabsList>
 
         <TabsContent value="articles">
-          <ArticleManager acteId={id!} articles={articles || []} />
+          <ArticlesTab acteId={id!} articles={articles || []} />
         </TabsContent>
 
         <TabsContent value="historique">

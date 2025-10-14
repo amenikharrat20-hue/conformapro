@@ -19,6 +19,7 @@ import BibliothequeTextes from "./pages/BibliothequeTextes";
 import BibliothequeTexteDetail from "./pages/BibliothequeTexteDetail";
 import BibliothequeTexteArticles from "./pages/BibliothequeTexteArticles";
 import BibliothequeArticleVersions from "./pages/BibliothequeArticleVersions";
+import ArticleVersions from "./pages/ArticleVersions";
 import ConformiteEvaluation from "./pages/ConformiteEvaluation";
 import PlanAction from "./pages/PlanAction";
 import GestionDomaines from "./pages/GestionDomaines";
@@ -80,6 +81,7 @@ const App = () => (
                           <Route path="/actes/nouveau" element={<TexteForm />} />
                           <Route path="/actes/:id" element={<TexteDetail />} />
                           <Route path="/actes/:id/editer" element={<TexteForm />} />
+                          <Route path="/actes/:acteId/articles/:articleId/versions" element={<ArticleVersions />} />
                           {/* Legacy routes for backward compatibility */}
                           <Route path="/textes" element={<TextesReglementaires />} />
                           <Route path="/textes/nouveau" element={<TexteForm />} />
