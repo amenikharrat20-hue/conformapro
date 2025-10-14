@@ -40,7 +40,6 @@ const menuItems: MenuItem[] = [
   { title: "Tableau de bord", url: "/", icon: LayoutDashboard },
   { title: "Clients", url: "/clients", icon: Building2 },
   { title: "Sites", url: "/sites", icon: Factory },
-  { title: "Actes réglementaires", url: "/actes", icon: BookOpen },
   { 
     title: "Veille réglementaire", 
     url: "/veille", 
