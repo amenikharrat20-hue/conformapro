@@ -3,31 +3,133 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   FileText, 
   Calendar, 
   ExternalLink,
   ArrowLeft,
-  List
+  Plus,
+  Pencil,
+  Trash2,
+  History
 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { actesQueries, articlesQueries } from "@/lib/actes-queries";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { textesReglementairesQueries, textesArticlesQueries } from "@/lib/textes-queries";
+import { toast } from "sonner";
+import { useState } from "react";
 
 export default function BibliothequeTexteDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [showArticleDialog, setShowArticleDialog] = useState(false);
+  const [editingArticle, setEditingArticle] = useState<any>(null);
+  const [deleteArticleId, setDeleteArticleId] = useState<string | null>(null);
+  const [articleForm, setArticleForm] = useState({
+    numero: "",
+    reference: "",
+    titre_court: "",
+    contenu: "",
+    ordre: 0,
+  });
 
-  const { data: acte, isLoading } = useQuery({
-    queryKey: ["bibliotheque-acte", id],
-    queryFn: () => actesQueries.getById(id!),
+  const { data: texte, isLoading } = useQuery({
+    queryKey: ["texte-detail", id],
+    queryFn: () => textesReglementairesQueries.getById(id!),
     enabled: !!id,
   });
 
   const { data: articles } = useQuery({
-    queryKey: ["bibliotheque-articles", id],
-    queryFn: () => articlesQueries.getByActeId(id!),
+    queryKey: ["texte-articles", id],
+    queryFn: () => textesArticlesQueries.getByTexteId(id!),
     enabled: !!id,
   });
+
+  const createArticleMutation = useMutation({
+    mutationFn: (data: any) => textesArticlesQueries.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["texte-articles"] });
+      toast.success("Article créé avec succès");
+      resetArticleForm();
+    },
+    onError: () => {
+      toast.error("Erreur lors de la création");
+    },
+  });
+
+  const updateArticleMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) =>
+      textesArticlesQueries.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["texte-articles"] });
+      toast.success("Article modifié avec succès");
+      resetArticleForm();
+    },
+    onError: () => {
+      toast.error("Erreur lors de la modification");
+    },
+  });
+
+  const deleteArticleMutation = useMutation({
+    mutationFn: (id: string) => textesArticlesQueries.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["texte-articles"] });
+      toast.success("Article supprimé avec succès");
+      setDeleteArticleId(null);
+    },
+    onError: () => {
+      toast.error("Erreur lors de la suppression");
+    },
+  });
+
+  const resetArticleForm = () => {
+    setArticleForm({
+      numero: "",
+      reference: "",
+      titre_court: "",
+      contenu: "",
+      ordre: 0,
+    });
+    setEditingArticle(null);
+    setShowArticleDialog(false);
+  };
+
+  const handleEditArticle = (article: any) => {
+    setEditingArticle(article);
+    setArticleForm({
+      numero: article.numero,
+      reference: article.reference || "",
+      titre_court: article.titre_court || "",
+      contenu: article.contenu || "",
+      ordre: article.ordre,
+    });
+    setShowArticleDialog(true);
+  };
+
+  const handleSubmitArticle = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!articleForm.numero.trim()) {
+      toast.error("Le numéro est requis");
+      return;
+    }
+
+    const data = {
+      texte_id: id,
+      ...articleForm,
+    };
+
+    if (editingArticle) {
+      updateArticleMutation.mutate({ id: editingArticle.id, data });
+    } else {
+      createArticleMutation.mutate(data);
+    }
+  };
 
   const getStatutBadge = (statut: string) => {
     switch (statut) {
@@ -52,7 +154,7 @@ export default function BibliothequeTexteDetail() {
     );
   }
 
-  if (!acte) {
+  if (!texte) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
         <FileText className="h-16 w-16 text-muted-foreground" />
@@ -64,11 +166,10 @@ export default function BibliothequeTexteDetail() {
     );
   }
 
-  const statutInfo = getStatutBadge(acte.statut_vigueur);
+  const statutInfo = getStatutBadge(texte.statut_vigueur);
 
   return (
     <div className="space-y-6">
-      {/* Navigation */}
       <Button
         variant="ghost"
         onClick={() => navigate("/veille/bibliotheque")}
@@ -78,13 +179,12 @@ export default function BibliothequeTexteDetail() {
         Retour à la bibliothèque
       </Button>
 
-      {/* En-tête du texte */}
       <Card className="shadow-medium">
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
-                <Badge variant="outline">{acte.numero_officiel}</Badge>
+                <Badge variant="outline">{texte.reference_officielle}</Badge>
                 <Badge
                   className={
                     statutInfo.variant === "success"
@@ -99,100 +199,270 @@ export default function BibliothequeTexteDetail() {
                   {statutInfo.label}
                 </Badge>
               </div>
-              <CardTitle className="text-2xl">{acte.intitule}</CardTitle>
-              {acte.objet_resume && (
-                <CardDescription className="mt-2">{acte.objet_resume}</CardDescription>
+              <CardTitle className="text-2xl">{texte.titre}</CardTitle>
+              {texte.resume && (
+                <CardDescription className="mt-2">{texte.resume}</CardDescription>
               )}
             </div>
-            <div className="flex gap-2">
-              {articles && articles.length > 0 && (
-                <Button
-                  onClick={() => navigate(`/veille/bibliotheque/textes/${id}/articles`)}
-                >
-                  <List className="h-4 w-4 mr-2" />
-                  Voir les articles ({articles.length})
-                </Button>
-              )}
-              {acte.lien_pdf && (
-                <Button
-                  variant="outline"
-                  onClick={() => window.open(acte.lien_pdf!, "_blank")}
-                >
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  PDF
-                </Button>
-              )}
-            </div>
+            {texte.fichier_pdf_url && (
+              <Button
+                variant="outline"
+                onClick={() => window.open(texte.fichier_pdf_url!, "_blank")}
+              >
+                <ExternalLink className="h-4 w-4 mr-2" />
+                PDF
+              </Button>
+            )}
           </div>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 sm:grid-cols-2">
-            {acte.date_signature && (
+            {texte.date_signature && (
               <div>
                 <div className="text-sm font-medium text-muted-foreground">Date de signature</div>
                 <div className="flex items-center gap-2 mt-1">
                   <Calendar className="h-4 w-4 text-muted-foreground" />
-                  {new Date(acte.date_signature).toLocaleDateString("fr-TN")}
+                  {new Date(texte.date_signature).toLocaleDateString("fr-TN")}
                 </div>
               </div>
             )}
-            {acte.date_publication_jort && (
+            {texte.date_publication && (
               <div>
-                <div className="text-sm font-medium text-muted-foreground">Date de publication JORT</div>
+                <div className="text-sm font-medium text-muted-foreground">Date de publication</div>
                 <div className="flex items-center gap-2 mt-1">
                   <Calendar className="h-4 w-4 text-muted-foreground" />
-                  {new Date(acte.date_publication_jort).toLocaleDateString("fr-TN")}
+                  {new Date(texte.date_publication).toLocaleDateString("fr-TN")}
                 </div>
               </div>
             )}
-            {acte.jort_numero && (
+            {texte.autorite && (
               <div>
-                <div className="text-sm font-medium text-muted-foreground">JORT N°</div>
-                <div className="mt-1">{acte.jort_numero}</div>
+                <div className="text-sm font-medium text-muted-foreground">Autorité</div>
+                <div className="mt-1">{texte.autorite}</div>
               </div>
             )}
-            {acte.autorite_emettrice && (
+            {texte.annee && (
               <div>
-                <div className="text-sm font-medium text-muted-foreground">Autorité émettrice</div>
-                <div className="mt-1">{acte.autorite_emettrice}</div>
+                <div className="text-sm font-medium text-muted-foreground">Année</div>
+                <div className="mt-1">{texte.annee}</div>
               </div>
             )}
           </div>
-
-          {acte.domaines && acte.domaines.length > 0 && (
-            <div className="mt-6">
-              <div className="text-sm font-medium text-muted-foreground mb-2">Domaines</div>
-              <div className="flex flex-wrap gap-2">
-                {acte.domaines.map((domaine, idx) => (
-                  <Badge key={idx} variant="outline">
-                    {domaine}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {acte.mots_cles && acte.mots_cles.length > 0 && (
-            <div className="mt-4">
-              <div className="text-sm font-medium text-muted-foreground mb-2">Mots-clés</div>
-              <div className="flex flex-wrap gap-2">
-                {acte.mots_cles.map((motCle, idx) => (
-                  <Badge key={idx} variant="secondary">
-                    {motCle}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {acte.notes_editoriales && (
-            <div className="mt-6">
-              <div className="text-sm font-medium text-muted-foreground mb-2">Notes éditoriales</div>
-              <div className="text-sm">{acte.notes_editoriales}</div>
-            </div>
-          )}
         </CardContent>
       </Card>
+
+      <Tabs defaultValue="articles" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="articles">Articles</TabsTrigger>
+          <TabsTrigger value="info">Informations</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="articles" className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-semibold">Articles</h2>
+            <Button onClick={() => setShowArticleDialog(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Ajouter un article
+            </Button>
+          </div>
+
+          {articles && articles.length > 0 ? (
+            <Card>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Numéro</TableHead>
+                    <TableHead>Référence</TableHead>
+                    <TableHead>Titre</TableHead>
+                    <TableHead>Ordre</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {articles.map((article) => (
+                    <TableRow key={article.id}>
+                      <TableCell className="font-medium">{article.numero}</TableCell>
+                      <TableCell>{article.reference || "-"}</TableCell>
+                      <TableCell>{article.titre_court || "-"}</TableCell>
+                      <TableCell>{article.ordre}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => navigate(`/veille/bibliotheque/articles/${article.id}/versions`)}
+                          >
+                            <History className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditArticle(article)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setDeleteArticleId(article.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Card>
+          ) : (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">Aucun article pour ce texte</p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="info">
+          <Card>
+            <CardContent className="pt-6 space-y-4">
+              {texte.code && (
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground">Code</div>
+                  <div className="mt-1">{texte.code.titre}</div>
+                </div>
+              )}
+              {texte.domaines && texte.domaines.length > 0 && (
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground mb-2">Domaines</div>
+                  <div className="flex flex-wrap gap-2">
+                    {texte.domaines.map((d: any) => (
+                      <Badge key={d.id} variant="outline">
+                        {d.libelle}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {texte.sous_domaines && texte.sous_domaines.length > 0 && (
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground mb-2">Sous-domaines</div>
+                  <div className="flex flex-wrap gap-2">
+                    {texte.sous_domaines.map((sd: any) => (
+                      <Badge key={sd.id} variant="secondary">
+                        {sd.libelle}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Article Dialog */}
+      <Dialog open={showArticleDialog} onOpenChange={setShowArticleDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {editingArticle ? "Modifier l'article" : "Ajouter un article"}
+            </DialogTitle>
+            <DialogDescription>
+              Remplissez les informations de l'article
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmitArticle}>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="numero">Numéro *</Label>
+                  <Input
+                    id="numero"
+                    value={articleForm.numero}
+                    onChange={(e) => setArticleForm({ ...articleForm, numero: e.target.value })}
+                    placeholder="Ex: 1, 2, 3..."
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="reference">Référence</Label>
+                  <Input
+                    id="reference"
+                    value={articleForm.reference}
+                    onChange={(e) => setArticleForm({ ...articleForm, reference: e.target.value })}
+                    placeholder="Ex: Art. 1"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="titre_court">Titre court</Label>
+                <Input
+                  id="titre_court"
+                  value={articleForm.titre_court}
+                  onChange={(e) => setArticleForm({ ...articleForm, titre_court: e.target.value })}
+                  placeholder="Titre descriptif de l'article"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="contenu">Contenu</Label>
+                <Textarea
+                  id="contenu"
+                  value={articleForm.contenu}
+                  onChange={(e) => setArticleForm({ ...articleForm, contenu: e.target.value })}
+                  placeholder="Contenu de l'article"
+                  rows={6}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="ordre">Ordre</Label>
+                <Input
+                  id="ordre"
+                  type="number"
+                  value={articleForm.ordre}
+                  onChange={(e) => setArticleForm({ ...articleForm, ordre: parseInt(e.target.value) || 0 })}
+                />
+              </div>
+            </div>
+            <DialogFooter className="mt-6">
+              <Button type="button" variant="outline" onClick={resetArticleForm}>
+                Annuler
+              </Button>
+              <Button type="submit">
+                {editingArticle ? "Modifier" : "Créer"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!deleteArticleId} onOpenChange={() => setDeleteArticleId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmer la suppression</DialogTitle>
+            <DialogDescription>
+              Êtes-vous sûr de vouloir supprimer cet article ? Cette action est irréversible.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteArticleId(null)}>
+              Annuler
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => deleteArticleId && deleteArticleMutation.mutate(deleteArticleId)}
+            >
+              Supprimer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -261,6 +261,16 @@ export const textesArticlesQueries = {
     return data;
   },
 
+  async getById(id: string) {
+    const { data, error } = await supabase
+      .from("textes_articles")
+      .select("*, textes_reglementaires(reference_officielle, titre)")
+      .eq("id", id)
+      .maybeSingle();
+    if (error) throw error;
+    return data;
+  },
+
   async create(article: any) {
     const { data, error } = await supabase
       .from("textes_articles")
@@ -286,6 +296,60 @@ export const textesArticlesQueries = {
     const { error } = await supabase
       .from("textes_articles")
       .delete()
+      .eq("id", id);
+    if (error) throw error;
+  },
+};
+
+export const textesArticlesVersionsQueries = {
+  async getByArticleId(articleId: string) {
+    const { data, error } = await supabase
+      .from("textes_articles_versions")
+      .select("*")
+      .eq("article_id", articleId)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return data;
+  },
+
+  async create(version: {
+    article_id: string;
+    version_label: string;
+    contenu: string;
+    date_effet?: string;
+    statut_vigueur: string;
+    remplace_version_id?: string;
+  }) {
+    const { data, error } = await supabase
+      .from("textes_articles_versions")
+      .insert([version as any])
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  async update(id: string, version: Partial<{
+    version_label: string;
+    contenu: string;
+    date_effet: string;
+    statut_vigueur: string;
+  }>) {
+    const { data, error } = await supabase
+      .from("textes_articles_versions")
+      .update(version as any)
+      .eq("id", id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  async softDelete(id: string) {
+    const { error } = await supabase
+      .from("textes_articles_versions")
+      .update({ deleted_at: new Date().toISOString() })
       .eq("id", id);
     if (error) throw error;
   },

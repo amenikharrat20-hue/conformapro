@@ -1084,7 +1084,9 @@ export type Database = {
           id: string
           numero: string
           ordre: number | null
+          reference: string | null
           texte_id: string
+          titre_court: string | null
           updated_at: string | null
         }
         Insert: {
@@ -1093,7 +1095,9 @@ export type Database = {
           id?: string
           numero: string
           ordre?: number | null
+          reference?: string | null
           texte_id: string
+          titre_court?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -1102,7 +1106,9 @@ export type Database = {
           id?: string
           numero?: string
           ordre?: number | null
+          reference?: string | null
           texte_id?: string
+          titre_court?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -1111,6 +1117,60 @@ export type Database = {
             columns: ["texte_id"]
             isOneToOne: false
             referencedRelation: "textes_reglementaires"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      textes_articles_versions: {
+        Row: {
+          article_id: string
+          contenu: string
+          created_at: string
+          date_effet: string | null
+          deleted_at: string | null
+          id: string
+          remplace_version_id: string | null
+          statut_vigueur: Database["public"]["Enums"]["statut_vigueur"]
+          updated_at: string
+          version_label: string
+        }
+        Insert: {
+          article_id: string
+          contenu: string
+          created_at?: string
+          date_effet?: string | null
+          deleted_at?: string | null
+          id?: string
+          remplace_version_id?: string | null
+          statut_vigueur?: Database["public"]["Enums"]["statut_vigueur"]
+          updated_at?: string
+          version_label: string
+        }
+        Update: {
+          article_id?: string
+          contenu?: string
+          created_at?: string
+          date_effet?: string | null
+          deleted_at?: string | null
+          id?: string
+          remplace_version_id?: string | null
+          statut_vigueur?: Database["public"]["Enums"]["statut_vigueur"]
+          updated_at?: string
+          version_label?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "textes_articles_versions_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "textes_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "textes_articles_versions_remplace_version_id_fkey"
+            columns: ["remplace_version_id"]
+            isOneToOne: false
+            referencedRelation: "textes_articles_versions"
             referencedColumns: ["id"]
           },
         ]
