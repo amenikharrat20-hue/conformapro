@@ -1175,7 +1175,7 @@ export type Database = {
           email: string | null
           equipements_critiques: Json | null
           est_siege: boolean | null
-          gouvernorat: Database["public"]["Enums"]["gouvernorat"] | null
+          gouvernorat: string | null
           id: string
           localite: string | null
           niveau_risque: Database["public"]["Enums"]["niveau_risque"] | null
@@ -1206,7 +1206,7 @@ export type Database = {
           email?: string | null
           equipements_critiques?: Json | null
           est_siege?: boolean | null
-          gouvernorat?: Database["public"]["Enums"]["gouvernorat"] | null
+          gouvernorat?: string | null
           id?: string
           localite?: string | null
           niveau_risque?: Database["public"]["Enums"]["niveau_risque"] | null
@@ -1237,7 +1237,7 @@ export type Database = {
           email?: string | null
           equipements_critiques?: Json | null
           est_siege?: boolean | null
-          gouvernorat?: Database["public"]["Enums"]["gouvernorat"] | null
+          gouvernorat?: string | null
           id?: string
           localite?: string | null
           niveau_risque?: Database["public"]["Enums"]["niveau_risque"] | null
