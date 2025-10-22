@@ -40,12 +40,12 @@ const menuItems: MenuItem[] = [
   { title: "Tableau de bord", url: "/dashboard", icon: LayoutDashboard },
   { title: "Clients", url: "/clients", icon: Building2 },
   { title: "Sites", url: "/sites", icon: Factory },
+  { title: "📚 Bibliothèque réglementaire", url: "/bibliotheque", icon: Library },
   { 
     title: "Veille réglementaire", 
     url: "/veille", 
     icon: FileText,
     subItems: [
-      { title: "Bibliothèque", url: "/veille/bibliotheque" },
       { title: "Domaines", url: "/veille/domaines" },
       { title: "Évaluation de conformité", url: "/veille/conformite" },
       { title: "Plan d'action", url: "/veille/actions" }

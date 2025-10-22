@@ -17,6 +17,7 @@ import SiteDetail from "./pages/SiteDetail";
 import VeilleReglementaire from "./pages/VeilleReglementaire";
 import BibliothequeTextes from "./pages/BibliothequeTextes";
 import BibliothequeReglementaire from "./pages/BibliothequeReglementaire";
+import BibliothequeNavigationTree from "./pages/BibliothequeNavigationTree";
 import BibliothequeTexteDetail from "./pages/BibliothequeTexteDetail";
 import BibliothequeTexteArticles from "./pages/BibliothequeTexteArticles";
 import BibliothequeArticleVersions from "./pages/BibliothequeArticleVersions";
@@ -91,6 +92,10 @@ const App = () => (
                           <Route path="/textes/nouveau" element={<TexteForm />} />
                           <Route path="/textes/:id" element={<TexteDetail />} />
                           <Route path="/textes/:id/editer" element={<TexteForm />} />
+                          <Route path="/bibliotheque" element={<BibliothequeNavigationTree />} />
+                          <Route path="/bibliotheque/textes/:id" element={<BibliothequeTexteDetail />} />
+                          <Route path="/bibliotheque/textes/:id/articles" element={<BibliothequeTexteArticles />} />
+                          <Route path="/bibliotheque/articles/:articleId/versions" element={<BibliothequeArticleVersions />} />
                           <Route path="/veille" element={<VeilleReglementaire />} />
                           <Route path="/veille/bibliotheque" element={<BibliothequeReglementaire />} />
                           <Route path="/veille/bibliotheque-ancienne" element={<BibliothequeTextes />} />

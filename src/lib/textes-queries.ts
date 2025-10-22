@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export interface TexteReglementaire {
   id: string;
-  type: 'LOI' | 'ARRETE' | 'DECRET' | 'CIRCULAIRE';
+  type: 'LOI_ORDINAIRE' | 'LOI_ORGANIQUE' | 'DECRET_LOI' | 'DECRET_PRESIDENTIEL' | 'DECRET_GOUVERNEMENTAL' | 'ARRETE_MINISTERIEL' | 'ARRETE_INTERMINISTERIEL' | 'CIRCULAIRE';
   code_id?: string;
   reference_officielle: string;
   titre: string;
@@ -29,6 +29,33 @@ export interface Code {
   updated_at: string;
   deleted_at?: string;
 }
+
+export const domainesQueries = {
+  async getActive() {
+    const { data, error } = await supabase
+      .from("domaines_application")
+      .select("*")
+      .eq("actif", true)
+      .is("deleted_at", null)
+      .order("libelle");
+    if (error) throw error;
+    return data || [];
+  },
+};
+
+export const sousDomainesQueries = {
+  async getActive(domaineId: string) {
+    const { data, error } = await supabase
+      .from("sous_domaines_application")
+      .select("*")
+      .eq("domaine_id", domaineId)
+      .eq("actif", true)
+      .is("deleted_at", null)
+      .order("ordre");
+    if (error) throw error;
+    return data || [];
+  },
+};
 
 export const textesReglementairesQueries = {
   async getAll(filters?: {

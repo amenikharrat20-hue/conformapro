@@ -21,7 +21,7 @@ interface TexteFormModalProps {
 export function TexteFormModal({ open, onOpenChange, texte, onSuccess }: TexteFormModalProps) {
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
-    type: "LOI" as "LOI" | "ARRETE" | "DECRET" | "CIRCULAIRE",
+    type: "LOI_ORDINAIRE" as "LOI_ORDINAIRE" | "LOI_ORGANIQUE" | "DECRET_LOI" | "DECRET_PRESIDENTIEL" | "DECRET_GOUVERNEMENTAL" | "ARRETE_MINISTERIEL" | "ARRETE_INTERMINISTERIEL" | "CIRCULAIRE",
     code_id: "",
     reference_officielle: "",
     titre: "",
@@ -69,7 +69,7 @@ export function TexteFormModal({ open, onOpenChange, texte, onSuccess }: TexteFo
       // TODO: Load existing domaines/sous-domaines for edit mode
     } else {
       setFormData({
-        type: "LOI",
+        type: "LOI_ORDINAIRE",
         code_id: "",
         reference_officielle: "",
         titre: "",
@@ -137,9 +137,13 @@ export function TexteFormModal({ open, onOpenChange, texte, onSuccess }: TexteFo
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="LOI">Loi</SelectItem>
-                  <SelectItem value="ARRETE">Arrêté</SelectItem>
-                  <SelectItem value="DECRET">Décret</SelectItem>
+                  <SelectItem value="LOI_ORDINAIRE">Loi ordinaire</SelectItem>
+                  <SelectItem value="LOI_ORGANIQUE">Loi organique</SelectItem>
+                  <SelectItem value="DECRET_LOI">Décret-loi</SelectItem>
+                  <SelectItem value="DECRET_PRESIDENTIEL">Décret présidentiel</SelectItem>
+                  <SelectItem value="DECRET_GOUVERNEMENTAL">Décret gouvernemental</SelectItem>
+                  <SelectItem value="ARRETE_MINISTERIEL">Arrêté ministériel</SelectItem>
+                  <SelectItem value="ARRETE_INTERMINISTERIEL">Arrêté interministériel</SelectItem>
                   <SelectItem value="CIRCULAIRE">Circulaire</SelectItem>
                 </SelectContent>
               </Select>
