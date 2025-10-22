@@ -741,6 +741,7 @@ export type Database = {
           empreinte_sha256: string | null
           fichier_url: string | null
           id: string
+          notes: string | null
           type: string | null
         }
         Insert: {
@@ -751,6 +752,7 @@ export type Database = {
           empreinte_sha256?: string | null
           fichier_url?: string | null
           id?: string
+          notes?: string | null
           type?: string | null
         }
         Update: {
@@ -761,6 +763,7 @@ export type Database = {
           empreinte_sha256?: string | null
           fichier_url?: string | null
           id?: string
+          notes?: string | null
           type?: string | null
         }
         Relationships: [
