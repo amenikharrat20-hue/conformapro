@@ -1,0 +1,302 @@
+import { supabase } from "@/integrations/supabase/client";
+import { Database } from "@/integrations/supabase/types";
+
+// ==================== CLIENTS ====================
+
+type ClientRow = Database["public"]["Tables"]["clients"]["Row"];
+type ClientInsert = Database["public"]["Tables"]["clients"]["Insert"];
+type ClientUpdate = Database["public"]["Tables"]["clients"]["Update"];
+
+export const fetchClients = async () => {
+  const { data, error } = await supabase
+    .from("clients")
+    .select("*")
+    .order("nom_legal");
+  
+  if (error) throw error;
+  return data;
+};
+
+export const fetchClientById = async (clientId: string) => {
+  const { data, error } = await supabase
+    .from("clients")
+    .select("*")
+    .eq("id", clientId)
+    .single();
+  
+  if (error) throw error;
+  return data;
+};
+
+export const createClient = async (client: ClientInsert) => {
+  const { data, error } = await supabase
+    .from("clients")
+    .insert(client)
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+};
+
+export const updateClient = async (clientId: string, updates: ClientUpdate) => {
+  const { data, error } = await supabase
+    .from("clients")
+    .update(updates)
+    .eq("id", clientId)
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+};
+
+export const deleteClient = async (clientId: string) => {
+  const { error } = await supabase
+    .from("clients")
+    .delete()
+    .eq("id", clientId);
+  
+  if (error) throw error;
+};
+
+// ==================== SITES ====================
+
+type SiteRow = Database["public"]["Tables"]["sites"]["Row"];
+type SiteInsert = Database["public"]["Tables"]["sites"]["Insert"];
+type SiteUpdate = Database["public"]["Tables"]["sites"]["Update"];
+
+export const fetchSites = async () => {
+  const { data, error } = await supabase
+    .from("sites")
+    .select("*, clients(nom_legal)")
+    .order("nom_site");
+  
+  if (error) throw error;
+  return data;
+};
+
+export const fetchSitesByClient = async (clientId: string) => {
+  const { data, error } = await supabase
+    .from("sites")
+    .select("*")
+    .eq("client_id", clientId)
+    .order("nom_site");
+  
+  if (error) throw error;
+  return data;
+};
+
+export const fetchSiteById = async (siteId: string) => {
+  const { data, error } = await supabase
+    .from("sites")
+    .select("*, clients(nom_legal)")
+    .eq("id", siteId)
+    .single();
+  
+  if (error) throw error;
+  return data;
+};
+
+export const createSite = async (site: SiteInsert) => {
+  const { data, error } = await supabase
+    .from("sites")
+    .insert(site)
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+};
+
+export const updateSite = async (siteId: string, updates: SiteUpdate) => {
+  const { data, error } = await supabase
+    .from("sites")
+    .update(updates)
+    .eq("id", siteId)
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+};
+
+export const deleteSite = async (siteId: string) => {
+  const { error } = await supabase
+    .from("sites")
+    .delete()
+    .eq("id", siteId);
+  
+  if (error) throw error;
+};
+
+// ==================== UTILISATEURS CLIENTS (PROFILES) ====================
+
+type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
+type ProfileUpdate = Database["public"]["Tables"]["profiles"]["Update"];
+
+export const fetchUtilisateurs = async () => {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select(`
+      *,
+      clients(nom_legal),
+      sites(nom_site),
+      user_roles(role)
+    `)
+    .order("nom");
+  
+  if (error) throw error;
+  return data;
+};
+
+export const fetchUtilisateursByClient = async (clientId: string) => {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select(`
+      *,
+      sites(nom_site),
+      user_roles(role)
+    `)
+    .eq("client_id", clientId)
+    .order("nom");
+  
+  if (error) throw error;
+  return data;
+};
+
+export const fetchUtilisateurById = async (utilisateurId: string) => {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select(`
+      *,
+      clients(nom_legal),
+      sites(nom_site),
+      user_roles(role)
+    `)
+    .eq("id", utilisateurId)
+    .single();
+  
+  if (error) throw error;
+  return data;
+};
+
+export const updateUtilisateur = async (utilisateurId: string, updates: ProfileUpdate) => {
+  const { data, error } = await supabase
+    .from("profiles")
+    .update(updates)
+    .eq("id", utilisateurId)
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+};
+
+export const toggleUtilisateurActif = async (utilisateurId: string, actif: boolean) => {
+  const { data, error } = await supabase
+    .from("profiles")
+    .update({ actif })
+    .eq("id", utilisateurId)
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+};
+
+// ==================== ACCESS SCOPES ====================
+
+type AccessScopeRow = Database["public"]["Tables"]["access_scopes"]["Row"];
+type AccessScopeInsert = Database["public"]["Tables"]["access_scopes"]["Insert"];
+type AccessScopeUpdate = Database["public"]["Tables"]["access_scopes"]["Update"];
+
+export const fetchAccessScopes = async () => {
+  const { data, error } = await supabase
+    .from("access_scopes")
+    .select(`
+      *,
+      profiles(nom, prenom, email),
+      sites(nom_site, clients(nom_legal))
+    `)
+    .order("created_at", { ascending: false });
+  
+  if (error) throw error;
+  return data;
+};
+
+export const fetchAccessScopesByUser = async (utilisateurId: string) => {
+  const { data, error } = await supabase
+    .from("access_scopes")
+    .select(`
+      *,
+      sites(nom_site, client_id, clients(nom_legal))
+    `)
+    .eq("utilisateur_id", utilisateurId);
+  
+  if (error) throw error;
+  return data;
+};
+
+export const fetchAccessScopesBySite = async (siteId: string) => {
+  const { data, error } = await supabase
+    .from("access_scopes")
+    .select(`
+      *,
+      profiles(nom, prenom, email, fonction)
+    `)
+    .eq("site_id", siteId);
+  
+  if (error) throw error;
+  return data;
+};
+
+export const createAccessScope = async (scope: AccessScopeInsert) => {
+  const { data, error } = await supabase
+    .from("access_scopes")
+    .insert(scope)
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+};
+
+export const updateAccessScope = async (scopeId: string, updates: AccessScopeUpdate) => {
+  const { data, error } = await supabase
+    .from("access_scopes")
+    .update(updates)
+    .eq("id", scopeId)
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+};
+
+export const deleteAccessScope = async (scopeId: string) => {
+  const { error } = await supabase
+    .from("access_scopes")
+    .delete()
+    .eq("id", scopeId);
+  
+  if (error) throw error;
+};
+
+export const grantSiteAccess = async (utilisateurId: string, siteId: string, readOnly: boolean = false) => {
+  return createAccessScope({
+    utilisateur_id: utilisateurId,
+    site_id: siteId,
+    read_only: readOnly,
+  });
+};
+
+export const revokeSiteAccess = async (utilisateurId: string, siteId: string) => {
+  const { error } = await supabase
+    .from("access_scopes")
+    .delete()
+    .eq("utilisateur_id", utilisateurId)
+    .eq("site_id", siteId);
+  
+  if (error) throw error;
+};
