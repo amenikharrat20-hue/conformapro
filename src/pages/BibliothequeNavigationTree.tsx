@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { textesReglementairesQueries, domainesQueries, sousDomainesQueries } from "@/lib/textes-queries";
+import { TexteReglementaireFormModal } from "@/components/TexteReglementaireFormModal";
 
 const TYPE_LABELS: Record<string, string> = {
   LOI_ORDINAIRE: "Loi ordinaire",
@@ -49,6 +50,7 @@ export default function BibliothequeNavigationTree() {
   const [selectedType, setSelectedType] = useState<string>("all");
   const [selectedStatut, setSelectedStatut] = useState<string>("all");
   const [selectedDomaine, setSelectedDomaine] = useState<string>("all");
+  const [showFormModal, setShowFormModal] = useState(false);
 
   const { data: domainesList } = useQuery({
     queryKey: ["domaines"],
@@ -127,7 +129,7 @@ export default function BibliothequeNavigationTree() {
             <Download className="h-4 w-4 mr-2" />
             Exporter
           </Button>
-          <Button size="sm" onClick={() => navigate("/bibliotheque/nouveau")}>
+          <Button size="sm" onClick={() => setShowFormModal(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Nouveau texte
           </Button>
@@ -427,6 +429,15 @@ export default function BibliothequeNavigationTree() {
           </Card>
         </div>
       </div>
+
+      {/* Form Modal */}
+      <TexteReglementaireFormModal
+        open={showFormModal}
+        onOpenChange={setShowFormModal}
+        onSuccess={() => {
+          // Refresh data after successful creation
+        }}
+      />
     </div>
   );
 }
