@@ -46,7 +46,6 @@ const clientSchema = z.object({
   couleur_primaire: z.string().optional(),
   couleur_secondaire: z.string().optional(),
   statut: z.string().optional(),
-  abonnement_type: z.string().optional(),
   contrat_sla: z.string().optional(),
   notes: z.string().optional(),
   sites: z.array(siteSchema).optional(),
@@ -73,7 +72,7 @@ export function ClientFormModal({ open, onOpenChange, client }: ClientFormModalP
     setValue,
   } = useForm<ClientFormData>({
     resolver: zodResolver(clientSchema),
-    defaultValues: client || { sites: [], statut: "actif", abonnement_type: "standard" },
+    defaultValues: client || { sites: [], statut: "actif" },
   });
 
   const { fields, append, remove } = useFieldArray({
@@ -316,21 +315,6 @@ const createMutation = useMutation({
             <h3 className="font-semibold text-sm">Configuration</h3>
             
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="abonnement_type">Type d'abonnement</Label>
-                <Select onValueChange={(value) => setValue("abonnement_type", value)} defaultValue={client?.abonnement_type || "standard"}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-background border border-border z-50">
-                    <SelectItem value="essentiel">Essentiel</SelectItem>
-                    <SelectItem value="standard">Standard</SelectItem>
-                    <SelectItem value="premium">Premium</SelectItem>
-                    <SelectItem value="entreprise">Entreprise</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
               <div>
                 <Label htmlFor="statut">Statut</Label>
                 <Select onValueChange={(value) => setValue("statut", value)} defaultValue={client?.statut || "actif"}>

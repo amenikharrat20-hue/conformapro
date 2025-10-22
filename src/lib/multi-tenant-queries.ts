@@ -309,3 +309,127 @@ export const runIntegrityChecks = async () => {
   if (error) throw error;
   return data;
 };
+
+// ==================== MODULES SYSTEM ====================
+
+type ModuleSystemeRow = Database["public"]["Tables"]["modules_systeme"]["Row"];
+type SiteModuleRow = Database["public"]["Tables"]["site_modules"]["Row"];
+type SiteModuleInsert = Database["public"]["Tables"]["site_modules"]["Insert"];
+type SiteVeilleDomaineRow = Database["public"]["Tables"]["site_veille_domaines"]["Row"];
+type SiteVeilleDomaineInsert = Database["public"]["Tables"]["site_veille_domaines"]["Insert"];
+
+export const listModulesSysteme = async () => {
+  const { data, error } = await supabase
+    .from("modules_systeme")
+    .select("*")
+    .eq("actif", true)
+    .order("libelle");
+  
+  if (error) throw error;
+  return data;
+};
+
+export const listSiteModules = async (siteId: string) => {
+  const { data, error } = await supabase
+    .from("site_modules")
+    .select(`
+      *,
+      modules_systeme(code, libelle, description)
+    `)
+    .eq("site_id", siteId);
+  
+  if (error) throw error;
+  return data;
+};
+
+export const toggleSiteModule = async (
+  siteId: string, 
+  moduleCode: string, 
+  enabled: boolean,
+  userId?: string
+) => {
+  // First, get the module_id by code
+  const { data: module, error: moduleError } = await supabase
+    .from("modules_systeme")
+    .select("id")
+    .eq("code", moduleCode)
+    .single();
+  
+  if (moduleError) throw moduleError;
+  if (!module) throw new Error(`Module ${moduleCode} not found`);
+
+  // Upsert site_modules
+  const { data, error } = await supabase
+    .from("site_modules")
+    .upsert({
+      site_id: siteId,
+      module_id: module.id,
+      enabled,
+      enabled_by: userId,
+      enabled_at: new Date().toISOString(),
+    }, {
+      onConflict: "site_id,module_id"
+    })
+    .select()
+    .single();
+  
+  if (error) throw error;
+
+  // If disabling VEILLE module, disable all veille domains
+  if (moduleCode === 'VEILLE' && !enabled) {
+    const { error: disableError } = await supabase
+      .from("site_veille_domaines")
+      .update({ enabled: false })
+      .eq("site_id", siteId);
+    
+    if (disableError) throw disableError;
+  }
+
+  return data;
+};
+
+export const listDomaines = async () => {
+  const { data, error } = await supabase
+    .from("domaines_application")
+    .select("*")
+    .eq("actif", true)
+    .is("deleted_at", null)
+    .order("libelle");
+  
+  if (error) throw error;
+  return data;
+};
+
+export const listSiteVeilleDomaines = async (siteId: string) => {
+  const { data, error } = await supabase
+    .from("site_veille_domaines")
+    .select(`
+      *,
+      domaines_application(code, libelle, description)
+    `)
+    .eq("site_id", siteId);
+  
+  if (error) throw error;
+  return data;
+};
+
+export const toggleSiteVeilleDomaine = async (
+  siteId: string, 
+  domaineId: string, 
+  enabled: boolean
+) => {
+  const { data, error } = await supabase
+    .from("site_veille_domaines")
+    .upsert({
+      site_id: siteId,
+      domaine_id: domaineId,
+      enabled,
+    }, {
+      onConflict: "site_id,domaine_id"
+    })
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+};

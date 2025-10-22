@@ -3,6 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -14,11 +17,23 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createSite, updateSite, fetchClientById } from "@/lib/multi-tenant-queries";
+import { 
+  createSite, 
+  updateSite, 
+  fetchClientById,
+  listModulesSysteme,
+  listSiteModules,
+  toggleSiteModule,
+  listDomaines,
+  listSiteVeilleDomaines,
+  toggleSiteVeilleDomaine
+} from "@/lib/multi-tenant-queries";
 import { Database } from "@/integrations/supabase/types";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
-import { Building2 } from "lucide-react";
+import { Building2, Settings, AlertCircle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
 
 type SiteRow = Database["public"]["Tables"]["sites"]["Row"];
 
@@ -49,6 +64,27 @@ interface SiteFormModalProps {
 export function SiteFormModal({ open, onOpenChange, site, clientId }: SiteFormModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [activeTab, setActiveTab] = useState("info");
+
+  // Check user role
+  useEffect(() => {
+    const checkRole = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: roles } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id);
+
+      const hasAdminRole = roles?.some(r => 
+        r.role === 'admin_global' || r.role === 'admin_client'
+      );
+      setIsAdmin(hasAdminRole || false);
+    };
+    checkRole();
+  }, []);
 
   // Fetch client details if we have a site
   const { data: clientData } = useQuery({
@@ -56,6 +92,36 @@ export function SiteFormModal({ open, onOpenChange, site, clientId }: SiteFormMo
     queryFn: () => site ? fetchClientById(site.client_id) : Promise.resolve(null),
     enabled: !!site?.client_id,
   });
+
+  // Fetch modules system
+  const { data: modulesSysteme = [] } = useQuery({
+    queryKey: ["modules-systeme"],
+    queryFn: listModulesSysteme,
+  });
+
+  // Fetch site modules
+  const { data: siteModules = [], refetch: refetchSiteModules } = useQuery({
+    queryKey: ["site-modules", site?.id],
+    queryFn: () => site?.id ? listSiteModules(site.id) : Promise.resolve([]),
+    enabled: !!site?.id,
+  });
+
+  // Fetch domaines
+  const { data: domaines = [] } = useQuery({
+    queryKey: ["domaines"],
+    queryFn: listDomaines,
+  });
+
+  // Fetch site veille domaines
+  const { data: siteVeilleDomaines = [], refetch: refetchVeilleDomaines } = useQuery({
+    queryKey: ["site-veille-domaines", site?.id],
+    queryFn: () => site?.id ? listSiteVeilleDomaines(site.id) : Promise.resolve([]),
+    enabled: !!site?.id,
+  });
+
+  // Check if VEILLE module is enabled
+  const veilleModule = siteModules.find((sm: any) => sm.modules_systeme?.code === 'VEILLE');
+  const isVeilleEnabled = veilleModule?.enabled || false;
   
   const {
     register,
@@ -126,9 +192,81 @@ export function SiteFormModal({ open, onOpenChange, site, clientId }: SiteFormMo
     }
   };
 
+  const handleToggleModule = async (moduleCode: string, enabled: boolean) => {
+    if (!site?.id || !isAdmin) {
+      toast({
+        title: "Non autorisé",
+        description: "Vous n'avez pas l'autorisation de modifier les modules de ce site.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      await toggleSiteModule(site.id, moduleCode, enabled, user?.id);
+      await refetchSiteModules();
+      
+      if (moduleCode === 'VEILLE' && !enabled) {
+        await refetchVeilleDomaines();
+        toast({
+          title: enabled ? "Module activé" : "Module désactivé",
+          description: "Les domaines de veille ont été désactivés car le module Veille réglementaire est OFF.",
+        });
+      } else {
+        toast({
+          title: enabled ? "Module activé pour ce site" : "Module désactivé pour ce site",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleToggleDomaine = async (domaineId: string, enabled: boolean) => {
+    if (!site?.id || !isAdmin) {
+      toast({
+        title: "Non autorisé",
+        description: "Vous n'avez pas l'autorisation de modifier les domaines de ce site.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await toggleSiteVeilleDomaine(site.id, domaineId, enabled);
+      await refetchVeilleDomaines();
+      toast({
+        title: enabled ? "Domaine activé" : "Domaine désactivé",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const isModuleEnabled = (moduleCode: string) => {
+    return siteModules.find((sm: any) => 
+      sm.modules_systeme?.code === moduleCode
+    )?.enabled || false;
+  };
+
+  const isDomaineEnabled = (domaineId: string) => {
+    return siteVeilleDomaines.find((svd: any) => 
+      svd.domaine_id === domaineId
+    )?.enabled || false;
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{site ? "Modifier le site" : "Nouveau site"}</DialogTitle>
         </DialogHeader>
@@ -143,8 +281,15 @@ export function SiteFormModal({ open, onOpenChange, site, clientId }: SiteFormMo
             <Badge variant="outline">{clientData.statut}</Badge>
           </div>
         )}
-        
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="info">Informations</TabsTrigger>
+            {site && <TabsTrigger value="modules">Modules & Domaines</TabsTrigger>}
+          </TabsList>
+
+          <TabsContent value="info">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Show parent client info when editing */}
           {site && clientData && (
             <div className="mb-4 p-3 bg-muted rounded-md flex items-center gap-2">
@@ -266,15 +411,108 @@ export function SiteFormModal({ open, onOpenChange, site, clientId }: SiteFormMo
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Annuler
-            </Button>
-            <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-              {site ? "Modifier" : "Créer"}
-            </Button>
-          </div>
-        </form>
+              <div className="flex justify-end gap-2 pt-4">
+                <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                  Annuler
+                </Button>
+                <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
+                  {site ? "Modifier" : "Créer"}
+                </Button>
+              </div>
+            </form>
+          </TabsContent>
+
+          {site && (
+            <TabsContent value="modules" className="space-y-6 mt-4">
+              {!isAdmin && (
+                <div className="bg-muted/50 border border-border rounded-lg p-4 flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-muted-foreground">
+                    Vous n'avez pas l'autorisation de modifier les modules de ce site.
+                  </p>
+                </div>
+              )}
+
+              {/* Modules du site */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <Settings className="h-5 w-5" />
+                  <h3 className="font-semibold">Modules du site</h3>
+                </div>
+                
+                <div className="space-y-3 bg-muted/30 rounded-lg p-4">
+                  {modulesSysteme.map((module: any) => (
+                    <div key={module.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                      <div className="flex-1">
+                        <p className="font-medium">{module.libelle}</p>
+                        {module.description && (
+                          <p className="text-sm text-muted-foreground">{module.description}</p>
+                        )}
+                      </div>
+                      <Switch
+                        checked={isModuleEnabled(module.code)}
+                        onCheckedChange={(checked) => handleToggleModule(module.code, checked)}
+                        disabled={!isAdmin}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Domaines de veille (only visible if VEILLE module is enabled) */}
+              {isVeilleEnabled && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="h-5 w-5" />
+                    <h3 className="font-semibold">Domaines de la veille réglementaire</h3>
+                  </div>
+                  
+                  <div className="space-y-3 bg-muted/30 rounded-lg p-4">
+                    {domaines.map((domaine: any) => (
+                      <div key={domaine.id} className="flex items-start gap-3 py-2">
+                        <Checkbox
+                          id={`domaine-${domaine.id}`}
+                          checked={isDomaineEnabled(domaine.id)}
+                          onCheckedChange={(checked) => handleToggleDomaine(domaine.id, checked as boolean)}
+                          disabled={!isAdmin}
+                          className="mt-1"
+                        />
+                        <label
+                          htmlFor={`domaine-${domaine.id}`}
+                          className="flex-1 cursor-pointer"
+                        >
+                          <p className="font-medium">{domaine.libelle}</p>
+                          {domaine.description && (
+                            <p className="text-sm text-muted-foreground">{domaine.description}</p>
+                          )}
+                          <Badge variant="outline" className="mt-1">{domaine.code}</Badge>
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {!isVeilleEnabled && (
+                <div className="bg-muted/50 border border-border rounded-lg p-4 flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">Module Veille réglementaire désactivé</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Activez le module "Veille réglementaire" pour configurer les domaines applicables à ce site.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-end pt-4">
+                <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                  Fermer
+                </Button>
+              </div>
+            </TabsContent>
+          )}
+        </Tabs>
       </DialogContent>
     </Dialog>
   );

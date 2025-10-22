@@ -3,10 +3,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Plus, Search, Factory, Users, Pencil, Trash2, FileText, Building2 } from "lucide-react";
+import { MapPin, Plus, Search, Factory, Users, Pencil, Trash2, FileText, Building2, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchSites, deleteSite } from "@/lib/multi-tenant-queries";
+import { fetchSites, deleteSite, listSiteModules } from "@/lib/multi-tenant-queries";
 import { SiteFormModal } from "@/components/SiteFormModal";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -28,6 +28,34 @@ export default function Sites() {
     queryKey: ["sites"],
     queryFn: fetchSites,
   });
+
+  // Component to show active modules for a site
+  const SiteModulesBadges = ({ siteId }: { siteId: string }) => {
+    const { data: siteModules = [] } = useQuery({
+      queryKey: ["site-modules", siteId],
+      queryFn: () => listSiteModules(siteId),
+    });
+
+    const activeModules = siteModules.filter((sm: any) => sm.enabled);
+
+    if (activeModules.length === 0) return null;
+
+    return (
+      <div className="flex flex-wrap gap-1 mt-2">
+        {activeModules.slice(0, 3).map((sm: any) => (
+          <Badge key={sm.id} variant="secondary" className="text-xs">
+            <Settings className="h-3 w-3 mr-1" />
+            {sm.modules_systeme?.libelle}
+          </Badge>
+        ))}
+        {activeModules.length > 3 && (
+          <Badge variant="outline" className="text-xs">
+            +{activeModules.length - 3}
+          </Badge>
+        )}
+      </div>
+    );
+  };
 
   const deleteMutation = useMutation({
     mutationFn: deleteSite,
@@ -221,6 +249,7 @@ export default function Sites() {
                       <span className="text-muted-foreground line-clamp-1">{site.activite}</span>
                     </div>
                   )}
+                  <SiteModulesBadges siteId={site.id} />
                   <div className="flex items-center justify-between pt-3 border-t border-border">
                     {site.responsable_site ? (
                       <span className="text-sm font-medium text-muted-foreground truncate">
