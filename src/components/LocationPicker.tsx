@@ -1,14 +1,8 @@
-import { useEffect, useState, lazy, Suspense } from "react";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Search, MapPin } from "lucide-react";
-
-const LocationPickerMap = lazy(() => 
-  import("./LocationPickerMap").then(module => ({
-    default: module.LocationPickerMap
-  }))
-);
+import { Search, MapPin, ExternalLink } from "lucide-react";
 
 interface LocationPickerProps {
   lat?: number | null;
@@ -17,24 +11,27 @@ interface LocationPickerProps {
 }
 
 export function LocationPicker({ lat, lng, onLocationChange }: LocationPickerProps) {
-  const [position, setPosition] = useState<[number, number]>([
-    lat || 36.8065, // Default: Tunis
-    lng || 10.1815,
-  ]);
+  const [latitude, setLatitude] = useState<string>(lat?.toString() || "");
+  const [longitude, setLongitude] = useState<string>(lng?.toString() || "");
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
-  const [mapKey, setMapKey] = useState(0);
 
-  useEffect(() => {
-    if (lat && lng) {
-      setPosition([lat, lng]);
-      setMapKey(prev => prev + 1);
+  const handleLatChange = (value: string) => {
+    setLatitude(value);
+    const newLat = parseFloat(value);
+    const newLng = parseFloat(longitude);
+    if (!isNaN(newLat) && !isNaN(newLng)) {
+      onLocationChange(newLat, newLng);
     }
-  }, [lat, lng]);
+  };
 
-  const handleLocationSelect = (newLat: number, newLng: number) => {
-    setPosition([newLat, newLng]);
-    onLocationChange(newLat, newLng);
+  const handleLngChange = (value: string) => {
+    setLongitude(value);
+    const newLat = parseFloat(latitude);
+    const newLng = parseFloat(value);
+    if (!isNaN(newLat) && !isNaN(newLng)) {
+      onLocationChange(newLat, newLng);
+    }
   };
 
   const handleSearch = async () => {
@@ -51,8 +48,9 @@ export function LocationPicker({ lat, lng, onLocationChange }: LocationPickerPro
       if (data && data.length > 0) {
         const newLat = parseFloat(data[0].lat);
         const newLng = parseFloat(data[0].lon);
-        handleLocationSelect(newLat, newLng);
-        setMapKey(prev => prev + 1);
+        setLatitude(newLat.toFixed(6));
+        setLongitude(newLng.toFixed(6));
+        onLocationChange(newLat, newLng);
       }
     } catch (error) {
       console.error("Erreur lors de la recherche:", error);
@@ -61,12 +59,30 @@ export function LocationPicker({ lat, lng, onLocationChange }: LocationPickerPro
     }
   };
 
+  const openInGoogleMaps = () => {
+    const lat = parseFloat(latitude);
+    const lng = parseFloat(longitude);
+    if (!isNaN(lat) && !isNaN(lng)) {
+      window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
+    }
+  };
+
+  const openInOpenStreetMap = () => {
+    const lat = parseFloat(latitude);
+    const lng = parseFloat(longitude);
+    if (!isNaN(lat) && !isNaN(lng)) {
+      window.open(`https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}&zoom=15`, '_blank');
+    }
+  };
+
+  const hasValidCoordinates = !isNaN(parseFloat(latitude)) && !isNaN(parseFloat(longitude));
+
   return (
     <div className="space-y-4">
       <div className="border-t pt-4">
         <Label className="text-sm font-medium mb-2 block flex items-center gap-2">
           <MapPin className="h-4 w-4" />
-          Localisation sur la carte (optionnel)
+          Localisation (optionnel)
         </Label>
         
         {/* Search box */}
@@ -87,36 +103,16 @@ export function LocationPicker({ lat, lng, onLocationChange }: LocationPickerPro
           </Button>
         </div>
 
-        {/* Map */}
-        <div className="h-64 rounded-lg overflow-hidden border border-border">
-          <Suspense fallback={
-            <div className="h-full w-full flex items-center justify-center bg-muted">
-              <p className="text-sm text-muted-foreground">Chargement de la carte...</p>
-            </div>
-          }>
-            <LocationPickerMap 
-              key={mapKey}
-              position={position} 
-              onLocationSelect={handleLocationSelect} 
-            />
-          </Suspense>
-        </div>
-
-        {/* Coordinates display */}
-        <div className="grid grid-cols-2 gap-4 mt-3">
+        {/* Coordinates input */}
+        <div className="grid grid-cols-2 gap-4">
           <div>
             <Label htmlFor="display_lat" className="text-xs">Latitude</Label>
             <Input
               id="display_lat"
               type="number"
               step="any"
-              value={position[0].toFixed(6)}
-              onChange={(e) => {
-                const newLat = parseFloat(e.target.value);
-                if (!isNaN(newLat)) {
-                  handleLocationSelect(newLat, position[1]);
-                }
-              }}
+              value={latitude}
+              onChange={(e) => handleLatChange(e.target.value)}
               placeholder="Ex: 36.8065"
             />
           </div>
@@ -126,20 +122,41 @@ export function LocationPicker({ lat, lng, onLocationChange }: LocationPickerPro
               id="display_lng"
               type="number"
               step="any"
-              value={position[1].toFixed(6)}
-              onChange={(e) => {
-                const newLng = parseFloat(e.target.value);
-                if (!isNaN(newLng)) {
-                  handleLocationSelect(position[0], newLng);
-                }
-              }}
+              value={longitude}
+              onChange={(e) => handleLngChange(e.target.value)}
               placeholder="Ex: 10.1815"
             />
           </div>
         </div>
 
+        {/* View on map buttons */}
+        {hasValidCoordinates && (
+          <div className="flex gap-2 mt-3">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={openInGoogleMaps}
+              className="flex items-center gap-2"
+            >
+              <ExternalLink className="h-3 w-3" />
+              Google Maps
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={openInOpenStreetMap}
+              className="flex items-center gap-2"
+            >
+              <ExternalLink className="h-3 w-3" />
+              OpenStreetMap
+            </Button>
+          </div>
+        )}
+
         <p className="text-xs text-muted-foreground mt-2">
-          Cliquez sur la carte pour placer le marqueur ou recherchez une adresse
+          Recherchez une adresse ou saisissez les coordonnées GPS manuellement
         </p>
       </div>
     </div>
