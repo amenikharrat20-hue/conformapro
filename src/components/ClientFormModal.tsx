@@ -95,10 +95,13 @@ export function ClientFormModal({ open, onOpenChange, client }: ClientFormModalP
 const createMutation = useMutation({
     mutationFn: async (data: ClientFormData) => {
       const { sites, ...clientData } = data;
+      console.log("Creating client with data:", clientData);
       const newClient = await createClient(clientData as any);
+      console.log("Client created successfully:", newClient);
       
       // Create sites if any
       if (sites && sites.length > 0) {
+        console.log("Creating sites:", sites);
         await Promise.all(
           sites.map(site => 
             createSite({ ...site, client_id: newClient.id, nom_site: site.nom_site, code_site: site.code_site } as any)
@@ -118,13 +121,20 @@ const createMutation = useMutation({
       reset();
       onOpenChange(false);
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      console.error("Full error object:", error);
+      console.error("Error message:", error?.message);
+      console.error("Error details:", error?.details);
+      console.error("Error hint:", error?.hint);
+      console.error("Error code:", error?.code);
+      
+      const errorMessage = error?.message || error?.details || "Impossible de créer le client.";
+      
       toast({
         title: "Erreur",
-        description: "Impossible de créer le client.",
+        description: errorMessage,
         variant: "destructive",
       });
-      console.error(error);
     },
   });
 
