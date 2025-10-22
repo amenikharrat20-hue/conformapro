@@ -4,12 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building2, Plus, Search, MapPin, Factory, Eye, Pencil, Trash2, FileText } from "lucide-react";
+import { Building2, Plus, Search, MapPin, Factory, Eye, Pencil, Trash2, FileText, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchClients, fetchSites, deleteClient } from "@/lib/multi-tenant-queries";
 import { ClientFormModal } from "@/components/ClientFormModal";
 import { SitesDrawer } from "@/components/SitesDrawer";
+import { IntegrityCheckerModal } from "@/components/IntegrityCheckerModal";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Database } from "@/integrations/supabase/types";
@@ -29,6 +30,7 @@ export default function Clients() {
   const [sitesDrawerOpen, setSitesDrawerOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<{ id: string; name: string; color?: string } | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [integrityCheckerOpen, setIntegrityCheckerOpen] = useState(false);
 
   const { data: clients, isLoading } = useQuery({
     queryKey: ["clients"],
@@ -113,6 +115,10 @@ export default function Clients() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setIntegrityCheckerOpen(true)}>
+            <AlertTriangle className="h-4 w-4 mr-2" />
+            Vérifier l'intégrité
+          </Button>
           <Button variant="outline" onClick={handleExportPDF}>
             <FileText className="h-4 w-4 mr-2" />
             Exporter
@@ -342,6 +348,11 @@ export default function Clients() {
           brandColor={selectedClient.color}
         />
       )}
+
+      <IntegrityCheckerModal
+        open={integrityCheckerOpen}
+        onOpenChange={setIntegrityCheckerOpen}
+      />
 
       <AlertDialog open={!!deletingId} onOpenChange={() => setDeletingId(null)}>
         <AlertDialogContent>

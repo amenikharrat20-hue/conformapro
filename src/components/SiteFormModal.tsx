@@ -2,15 +2,23 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useToast } from "@/hooks/use-toast";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createSite, updateSite } from "@/lib/multi-tenant-queries";
+import * as z from "zod";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createSite, updateSite, fetchClientById } from "@/lib/multi-tenant-queries";
 import { Database } from "@/integrations/supabase/types";
+import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
+import { Building2 } from "lucide-react";
 
 type SiteRow = Database["public"]["Tables"]["sites"]["Row"];
 
@@ -41,6 +49,13 @@ interface SiteFormModalProps {
 export function SiteFormModal({ open, onOpenChange, site, clientId }: SiteFormModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Fetch client details if we have a site
+  const { data: clientData } = useQuery({
+    queryKey: ["client", site?.client_id],
+    queryFn: () => site ? fetchClientById(site.client_id) : Promise.resolve(null),
+    enabled: !!site?.client_id,
+  });
   
   const {
     register,
@@ -117,8 +132,30 @@ export function SiteFormModal({ open, onOpenChange, site, clientId }: SiteFormMo
         <DialogHeader>
           <DialogTitle>{site ? "Modifier le site" : "Nouveau site"}</DialogTitle>
         </DialogHeader>
+
+        {/* Show parent client info when editing */}
+        {site && clientData && (
+          <div className="mb-4 p-3 bg-muted rounded-md flex items-center gap-2">
+            <Building2 className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm">
+              <strong>Client:</strong> {clientData.nom_legal}
+            </span>
+            <Badge variant="outline">{clientData.statut}</Badge>
+          </div>
+        )}
         
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          {/* Show parent client info when editing */}
+          {site && clientData && (
+            <div className="mb-4 p-3 bg-muted rounded-md flex items-center gap-2">
+              <Building2 className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm">
+                <strong>Client:</strong> {clientData.nom_legal}
+              </span>
+              <Badge variant="outline">{clientData.statut}</Badge>
+            </div>
+          )}
+
           {/* Identification */}
           <div className="space-y-4">
             <h3 className="font-semibold text-sm">Identification</h3>

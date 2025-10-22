@@ -300,3 +300,12 @@ export const revokeSiteAccess = async (utilisateurId: string, siteId: string) =>
   
   if (error) throw error;
 };
+
+// ==================== INTEGRITY CHECKS ====================
+
+export const runIntegrityChecks = async () => {
+  const { data, error } = await supabase.rpc('run_integrity_checks');
+  
+  if (error) throw error;
+  return data;
+};

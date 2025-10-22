@@ -1160,6 +1160,27 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      fix_duplicate_site_names: {
+        Args: never
+        Returns: {
+          details: Json
+          fixed_count: number
+        }[]
+      }
+      fix_orphaned_sites: {
+        Args: never
+        Returns: {
+          details: Json
+          fixed_count: number
+        }[]
+      }
+      fix_orphaned_users: {
+        Args: never
+        Returns: {
+          details: Json
+          fixed_count: number
+        }[]
+      }
       get_user_client_id: { Args: { _user_id: string }; Returns: string }
       get_user_site_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
@@ -1169,6 +1190,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      run_integrity_checks: { Args: never; Returns: Json }
     }
     Enums: {
       app_role:
