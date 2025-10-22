@@ -1,6 +1,6 @@
-// @ts-nocheck
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
+import type { LatLngExpression } from "leaflet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -8,13 +8,18 @@ import { Search, MapPin } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
-// Fix for default marker icons in react-leaflet
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
-  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
-  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+// Fix for default marker icons
+import icon from "leaflet/dist/images/marker-icon.png";
+import iconShadow from "leaflet/dist/images/marker-shadow.png";
+
+let DefaultIcon = L.icon({
+  iconUrl: icon,
+  shadowUrl: iconShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
 });
+
+L.Marker.prototype.options.icon = DefaultIcon;
 
 interface LocationPickerProps {
   lat?: number | null;
@@ -76,6 +81,9 @@ export function LocationPicker({ lat, lng, onLocationChange }: LocationPickerPro
     }
   };
 
+  const center = useMemo<LatLngExpression>(() => position, [position]);
+  const markerPosition = useMemo<LatLngExpression>(() => position, [position]);
+
   return (
     <div className="space-y-4">
       <div className="border-t pt-4">
@@ -106,13 +114,13 @@ export function LocationPicker({ lat, lng, onLocationChange }: LocationPickerPro
         <div className="h-64 rounded-lg overflow-hidden border border-border">
           <MapContainer
             key={mapKey}
-            center={position}
+            center={center}
             zoom={13}
             scrollWheelZoom={true}
             style={{ height: "100%", width: "100%" }}
           >
             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-            <Marker position={position} />
+            <Marker position={markerPosition} />
             <MapClickHandler onLocationSelect={handleLocationSelect} />
           </MapContainer>
         </div>
