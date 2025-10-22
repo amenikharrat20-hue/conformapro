@@ -787,6 +787,7 @@ export type Database = {
           id: string
           nom: string | null
           prenom: string | null
+          role_id: string | null
           site_id: string | null
           telephone: string | null
           updated_at: string
@@ -801,6 +802,7 @@ export type Database = {
           id: string
           nom?: string | null
           prenom?: string | null
+          role_id?: string | null
           site_id?: string | null
           telephone?: string | null
           updated_at?: string
@@ -815,6 +817,7 @@ export type Database = {
           id?: string
           nom?: string | null
           prenom?: string | null
+          role_id?: string | null
           site_id?: string | null
           telephone?: string | null
           updated_at?: string
@@ -825,6 +828,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
             referencedColumns: ["id"]
           },
           {
@@ -904,6 +914,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      roles: {
+        Row: {
+          actif: boolean | null
+          created_at: string | null
+          description: string | null
+          id: string
+          nom: string
+          permissions: Json
+          updated_at: string | null
+        }
+        Insert: {
+          actif?: boolean | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          nom: string
+          permissions?: Json
+          updated_at?: string | null
+        }
+        Update: {
+          actif?: boolean | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          nom?: string
+          permissions?: Json
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       sites: {
         Row: {
@@ -1445,6 +1485,10 @@ export type Database = {
       }
       get_user_client_id: { Args: { _user_id: string }; Returns: string }
       get_user_site_id: { Args: { _user_id: string }; Returns: string }
+      has_permission: {
+        Args: { _action: string; _module: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
