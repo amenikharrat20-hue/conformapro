@@ -5,9 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Separator } from "@/components/ui/separator";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { 
   FileText, 
   Calendar, 
@@ -16,27 +15,38 @@ import {
   Plus,
   Pencil,
   Trash2,
-  History
+  History,
+  ChevronDown,
+  ChevronRight,
+  GitCompare,
+  Check,
+  Star
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { textesReglementairesQueries, textesArticlesQueries } from "@/lib/textes-queries";
+import { textesReglementairesQueries, textesArticlesQueries, textesArticlesVersionsQueries } from "@/lib/textes-queries";
 import { toast } from "sonner";
 import { useState } from "react";
+import { ArticleFormModal } from "@/components/ArticleFormModal";
+import { ArticleVersionModal } from "@/components/ArticleVersionModal";
+import { ArticleVersionComparison } from "@/components/ArticleVersionComparison";
 
 export default function BibliothequeTexteDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [showArticleDialog, setShowArticleDialog] = useState(false);
+  
+  // Article management
+  const [showArticleModal, setShowArticleModal] = useState(false);
   const [editingArticle, setEditingArticle] = useState<any>(null);
   const [deleteArticleId, setDeleteArticleId] = useState<string | null>(null);
-  const [articleForm, setArticleForm] = useState({
-    numero: "",
-    reference: "",
-    titre_court: "",
-    contenu: "",
-    ordre: 0,
-  });
+  
+  // Version management
+  const [expandedArticles, setExpandedArticles] = useState<string[]>([]);
+  const [showVersionModal, setShowVersionModal] = useState(false);
+  const [currentArticleId, setCurrentArticleId] = useState<string>("");
+  const [editingVersion, setEditingVersion] = useState<any>(null);
+  const [showComparisonModal, setShowComparisonModal] = useState(false);
+  const [comparisonArticle, setComparisonArticle] = useState<any>(null);
 
   const { data: texte, isLoading, error } = useQuery({
     queryKey: ["texte-detail", id],
@@ -50,35 +60,19 @@ export default function BibliothequeTexteDetail() {
     enabled: !!id,
   });
 
+  // Fetch versions for each article
+  const versionsQueries = (articles || []).map(article => 
+    useQuery({
+      queryKey: ["article-versions", article.id],
+      queryFn: () => textesArticlesVersionsQueries.getByArticleId(article.id),
+      enabled: expandedArticles.includes(article.id),
+    })
+  );
+
   // Show error toast if query fails
   if (error) {
     toast.error("Erreur lors du chargement du texte");
   }
-
-  const createArticleMutation = useMutation({
-    mutationFn: (data: any) => textesArticlesQueries.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["texte-articles"] });
-      toast.success("Article créé avec succès");
-      resetArticleForm();
-    },
-    onError: () => {
-      toast.error("Erreur lors de la création");
-    },
-  });
-
-  const updateArticleMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) =>
-      textesArticlesQueries.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["texte-articles"] });
-      toast.success("Article modifié avec succès");
-      resetArticleForm();
-    },
-    onError: () => {
-      toast.error("Erreur lors de la modification");
-    },
-  });
 
   const deleteArticleMutation = useMutation({
     mutationFn: (id: string) => textesArticlesQueries.delete(id),
@@ -92,48 +86,63 @@ export default function BibliothequeTexteDetail() {
     },
   });
 
-  const resetArticleForm = () => {
-    setArticleForm({
-      numero: "",
-      reference: "",
-      titre_court: "",
-      contenu: "",
-      ordre: 0,
-    });
-    setEditingArticle(null);
-    setShowArticleDialog(false);
-  };
+  const deleteVersionMutation = useMutation({
+    mutationFn: (id: string) => textesArticlesVersionsQueries.softDelete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["article-versions"] });
+      toast.success("Version supprimée avec succès");
+    },
+    onError: () => {
+      toast.error("Erreur lors de la suppression");
+    },
+  });
+
+  const setCurrentVersionMutation = useMutation({
+    mutationFn: ({ articleId, version }: { articleId: string; version: any }) =>
+      textesArticlesQueries.update(articleId, { contenu: version.contenu }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["texte-articles"] });
+      toast.success("Version actuelle mise à jour");
+    },
+    onError: () => {
+      toast.error("Erreur lors de la mise à jour");
+    },
+  });
 
   const handleEditArticle = (article: any) => {
     setEditingArticle(article);
-    setArticleForm({
-      numero: article.numero,
-      reference: article.reference || "",
-      titre_court: article.titre_court || "",
-      contenu: article.contenu || "",
-      ordre: article.ordre,
-    });
-    setShowArticleDialog(true);
+    setShowArticleModal(true);
   };
 
-  const handleSubmitArticle = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!articleForm.numero.trim()) {
-      toast.error("Le numéro est requis");
-      return;
-    }
+  const handleAddVersion = (articleId: string) => {
+    setCurrentArticleId(articleId);
+    setEditingVersion(null);
+    setShowVersionModal(true);
+  };
 
-    const data = {
-      texte_id: id,
-      ...articleForm,
-    };
+  const handleEditVersion = (version: any, articleId: string) => {
+    setCurrentArticleId(articleId);
+    setEditingVersion(version);
+    setShowVersionModal(true);
+  };
 
-    if (editingArticle) {
-      updateArticleMutation.mutate({ id: editingArticle.id, data });
-    } else {
-      createArticleMutation.mutate(data);
+  const handleCompareVersions = (article: any) => {
+    setComparisonArticle(article);
+    setShowComparisonModal(true);
+  };
+
+  const handleSetCurrentVersion = (articleId: string, version: any) => {
+    if (confirm("Voulez-vous vraiment remplacer le contenu actuel de l'article par cette version ?")) {
+      setCurrentVersionMutation.mutate({ articleId, version });
     }
+  };
+
+  const toggleArticleExpand = (articleId: string) => {
+    setExpandedArticles(prev =>
+      prev.includes(articleId)
+        ? prev.filter(id => id !== articleId)
+        : [...prev, articleId]
+    );
   };
 
   const getStatutBadge = (statut: string) => {
@@ -167,7 +176,7 @@ export default function BibliothequeTexteDetail() {
         <p className="text-destructive font-medium">
           {error ? "Erreur lors du chargement" : "Texte non trouvé"}
         </p>
-        <Button variant="outline" onClick={() => navigate("/veille/bibliotheque")}>
+        <Button variant="outline" onClick={() => navigate("/bibliotheque")}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           Retour à la bibliothèque
         </Button>
@@ -181,7 +190,7 @@ export default function BibliothequeTexteDetail() {
     <div className="space-y-6">
       <Button
         variant="ghost"
-        onClick={() => navigate("/veille/bibliotheque")}
+        onClick={() => navigate("/bibliotheque")}
         className="mb-4"
       >
         <ArrowLeft className="h-4 w-4 mr-2" />
@@ -262,86 +271,220 @@ export default function BibliothequeTexteDetail() {
 
       <Tabs defaultValue="articles" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="articles">Articles</TabsTrigger>
+          <TabsTrigger value="articles">Articles ({articles?.length || 0})</TabsTrigger>
           <TabsTrigger value="info">Informations</TabsTrigger>
         </TabsList>
 
         <TabsContent value="articles" className="space-y-4">
           <div className="flex justify-between items-center gap-4">
-            <h2 className="text-xl font-semibold">Articles ({articles?.length || 0})</h2>
-            <Button onClick={() => setShowArticleDialog(true)}>
+            <h2 className="text-xl font-semibold">Articles réglementaires</h2>
+            <Button onClick={() => {
+              setEditingArticle(null);
+              setShowArticleModal(true);
+            }}>
               <Plus className="h-4 w-4 mr-2" />
               Ajouter un article
             </Button>
           </div>
 
-          {articlesLoading ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-3"></div>
-                <p className="text-muted-foreground">Chargement des articles...</p>
-              </CardContent>
-            </Card>
-          ) : articles && articles.length > 0 ? (
-            <Card>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Numéro</TableHead>
-                    <TableHead>Référence</TableHead>
-                    <TableHead>Titre</TableHead>
-                    <TableHead>Ordre</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {articles.map((article) => (
-                    <TableRow key={article.id}>
-                      <TableCell className="font-medium">{article.numero}</TableCell>
-                      <TableCell>{article.reference || "-"}</TableCell>
-                      <TableCell className="max-w-xs">
-                        <div className="line-clamp-2">{article.titre_court || "-"}</div>
-                      </TableCell>
-                      <TableCell>{article.ordre}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => navigate(`/veille/bibliotheque/articles/${article.id}/versions`)}
-                            title="Voir les versions"
-                          >
-                            <History className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEditArticle(article)}
-                            title="Modifier"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setDeleteArticleId(article.id)}
-                            title="Supprimer"
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
+          {articles && articles.length > 0 ? (
+            <div className="space-y-3">
+              {articles.map((article, index) => {
+                const isExpanded = expandedArticles.includes(article.id);
+                const versionsData = versionsQueries[index]?.data || [];
+
+                return (
+                  <Card key={article.id} className="shadow-soft">
+                    <Collapsible 
+                      open={isExpanded} 
+                      onOpenChange={() => toggleArticleExpand(article.id)}
+                    >
+                      <div className="p-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <CollapsibleTrigger asChild>
+                              <Button variant="ghost" size="sm" className="p-0 h-auto hover:bg-transparent">
+                                <div className="flex items-center gap-2">
+                                  {isExpanded ? (
+                                    <ChevronDown className="h-4 w-4" />
+                                  ) : (
+                                    <ChevronRight className="h-4 w-4" />
+                                  )}
+                                  <h3 className="font-semibold text-lg">
+                                    {article.numero}
+                                    {article.titre_court && ` - ${article.titre_court}`}
+                                  </h3>
+                                </div>
+                              </Button>
+                            </CollapsibleTrigger>
+                            {article.contenu && (
+                              <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+                                {article.contenu}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex gap-2 shrink-0">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleAddVersion(article.id)}
+                              title="Ajouter une version"
+                            >
+                              <History className="h-4 w-4 mr-2" />
+                              Version
+                            </Button>
+                            {versionsData.length > 0 && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleCompareVersions(article)}
+                                title="Comparer les versions"
+                              >
+                                <GitCompare className="h-4 w-4" />
+                              </Button>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEditArticle(article)}
+                              title="Modifier"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setDeleteArticleId(article.id)}
+                              title="Supprimer"
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
                         </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </Card>
+
+                        <CollapsibleContent>
+                          <Separator className="my-4" />
+                          
+                          {/* Article Content */}
+                          {article.contenu && (
+                            <div className="mb-4">
+                              <h4 className="text-sm font-medium text-muted-foreground mb-2">Contenu actuel:</h4>
+                              <div className="p-3 bg-muted/50 rounded-md">
+                                <p className="text-sm whitespace-pre-wrap">{article.contenu}</p>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Versions List */}
+                          <div>
+                            <div className="flex items-center justify-between mb-3">
+                              <h4 className="text-sm font-medium">Versions ({versionsData.length})</h4>
+                            </div>
+
+                            {versionsData.length > 0 ? (
+                              <div className="border rounded-md overflow-hidden">
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow>
+                                      <TableHead>Version</TableHead>
+                                      <TableHead>Date d'effet</TableHead>
+                                      <TableHead>Statut</TableHead>
+                                      <TableHead className="text-right">Actions</TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {versionsData.map((version: any) => {
+                                      const versionStatut = getStatutBadge(version.statut_vigueur);
+                                      return (
+                                        <TableRow key={version.id}>
+                                          <TableCell className="font-medium">
+                                            {version.version_label}
+                                          </TableCell>
+                                          <TableCell>
+                                            {version.date_effet 
+                                              ? new Date(version.date_effet).toLocaleDateString("fr-TN")
+                                              : "-"}
+                                          </TableCell>
+                                          <TableCell>
+                                            <Badge
+                                              className={
+                                                versionStatut.variant === "success"
+                                                  ? "bg-success text-success-foreground"
+                                                  : versionStatut.variant === "warning"
+                                                  ? "bg-warning text-warning-foreground"
+                                                  : versionStatut.variant === "destructive"
+                                                  ? "bg-destructive text-destructive-foreground"
+                                                  : ""
+                                              }
+                                            >
+                                              {versionStatut.label}
+                                            </Badge>
+                                          </TableCell>
+                                          <TableCell className="text-right">
+                                            <div className="flex justify-end gap-2">
+                                              <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => handleSetCurrentVersion(article.id, version)}
+                                                title="Marquer comme version actuelle"
+                                              >
+                                                <Check className="h-4 w-4" />
+                                              </Button>
+                                              <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => handleEditVersion(version, article.id)}
+                                                title="Modifier"
+                                              >
+                                                <Pencil className="h-4 w-4" />
+                                              </Button>
+                                              <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => {
+                                                  if (confirm("Supprimer cette version ?")) {
+                                                    deleteVersionMutation.mutate(version.id);
+                                                  }
+                                                }}
+                                                title="Supprimer"
+                                              >
+                                                <Trash2 className="h-4 w-4 text-destructive" />
+                                              </Button>
+                                            </div>
+                                          </TableCell>
+                                        </TableRow>
+                                      );
+                                    })}
+                                  </TableBody>
+                                </Table>
+                              </div>
+                            ) : (
+                              <div className="text-center py-8 border rounded-md bg-muted/20">
+                                <FileText className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                                <p className="text-sm text-muted-foreground">Aucune version</p>
+                              </div>
+                            )}
+                          </div>
+                        </CollapsibleContent>
+                      </div>
+                    </Collapsible>
+                  </Card>
+                );
+              })}
+            </div>
           ) : (
             <Card>
               <CardContent className="py-12 text-center">
                 <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-muted-foreground mb-4">Aucun article pour ce texte</p>
-                <Button variant="outline" size="sm" onClick={() => setShowArticleDialog(true)}>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => {
+                    setEditingArticle(null);
+                    setShowArticleModal(true);
+                  }}
+                >
                   <Plus className="h-4 w-4 mr-2" />
                   Ajouter le premier article
                 </Button>
@@ -376,129 +519,42 @@ export default function BibliothequeTexteDetail() {
                   </div>
                 </div>
               )}
-              {texte.sous_domaines && Array.isArray(texte.sous_domaines) && texte.sous_domaines.length > 0 && (
-                <div>
-                  <div className="text-sm font-medium text-muted-foreground mb-2">Sous-domaines</div>
-                  <div className="flex flex-wrap gap-2">
-                    {texte.sous_domaines
-                      .filter((item: any) => item.sous_domaine)
-                      .map((item: any, idx: number) => (
-                        <Badge key={item.sous_domaine.id || idx} variant="secondary">
-                          {item.sous_domaine.libelle}
-                        </Badge>
-                      ))}
-                  </div>
-                </div>
-              )}
-              <div>
-                <div className="text-sm font-medium text-muted-foreground">Type de texte</div>
-                <div className="mt-1">
-                  <Badge variant="outline">
-                    {texte.type === 'LOI' ? 'Loi' : 
-                     texte.type === 'DECRET' ? 'Décret' :
-                     texte.type === 'ARRETE' ? 'Arrêté' :
-                     texte.type === 'CIRCULAIRE' ? 'Circulaire' : texte.type}
-                  </Badge>
-                </div>
-              </div>
-              {texte.created_at && (
-                <div>
-                  <div className="text-sm font-medium text-muted-foreground">Date de création</div>
-                  <div className="text-sm text-muted-foreground mt-1">
-                    {new Date(texte.created_at).toLocaleDateString("fr-FR", {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </div>
-                </div>
-              )}
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
 
-      {/* Article Dialog */}
-      <Dialog open={showArticleDialog} onOpenChange={setShowArticleDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>
-              {editingArticle ? "Modifier l'article" : "Ajouter un article"}
-            </DialogTitle>
-            <DialogDescription>
-              Remplissez les informations de l'article
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleSubmitArticle}>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="numero">Numéro *</Label>
-                  <Input
-                    id="numero"
-                    value={articleForm.numero}
-                    onChange={(e) => setArticleForm({ ...articleForm, numero: e.target.value })}
-                    placeholder="Ex: 1, 2, 3..."
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="reference">Référence</Label>
-                  <Input
-                    id="reference"
-                    value={articleForm.reference}
-                    onChange={(e) => setArticleForm({ ...articleForm, reference: e.target.value })}
-                    placeholder="Ex: Art. 1"
-                  />
-                </div>
-              </div>
+      {/* Modals */}
+      <ArticleFormModal
+        open={showArticleModal}
+        onOpenChange={setShowArticleModal}
+        texteId={id!}
+        article={editingArticle}
+        onSuccess={() => {
+          setEditingArticle(null);
+        }}
+      />
 
-              <div className="space-y-2">
-                <Label htmlFor="titre_court">Titre court</Label>
-                <Input
-                  id="titre_court"
-                  value={articleForm.titre_court}
-                  onChange={(e) => setArticleForm({ ...articleForm, titre_court: e.target.value })}
-                  placeholder="Titre descriptif de l'article"
-                />
-              </div>
+      <ArticleVersionModal
+        open={showVersionModal}
+        onOpenChange={setShowVersionModal}
+        articleId={currentArticleId}
+        version={editingVersion}
+        onSuccess={() => {
+          setEditingVersion(null);
+        }}
+      />
 
-              <div className="space-y-2">
-                <Label htmlFor="contenu">Contenu</Label>
-                <Textarea
-                  id="contenu"
-                  value={articleForm.contenu}
-                  onChange={(e) => setArticleForm({ ...articleForm, contenu: e.target.value })}
-                  placeholder="Contenu de l'article"
-                  rows={6}
-                />
-              </div>
+      {comparisonArticle && (
+        <ArticleVersionComparison
+          open={showComparisonModal}
+          onOpenChange={setShowComparisonModal}
+          versions={versionsQueries[articles?.findIndex(a => a.id === comparisonArticle.id) || 0]?.data || []}
+          currentVersion={comparisonArticle}
+        />
+      )}
 
-              <div className="space-y-2">
-                <Label htmlFor="ordre">Ordre</Label>
-                <Input
-                  id="ordre"
-                  type="number"
-                  value={articleForm.ordre}
-                  onChange={(e) => setArticleForm({ ...articleForm, ordre: parseInt(e.target.value) || 0 })}
-                />
-              </div>
-            </div>
-            <DialogFooter className="mt-6">
-              <Button type="button" variant="outline" onClick={resetArticleForm}>
-                Annuler
-              </Button>
-              <Button type="submit">
-                {editingArticle ? "Modifier" : "Créer"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirmation Dialog */}
+      {/* Delete Article Confirmation */}
       <Dialog open={!!deleteArticleId} onOpenChange={() => setDeleteArticleId(null)}>
         <DialogContent>
           <DialogHeader>
