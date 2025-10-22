@@ -147,12 +147,11 @@ export function TexteFormModal({ open, onOpenChange, texte, onSuccess }: TexteFo
 
             <div className="space-y-2">
               <Label htmlFor="code_id">Code (optionnel)</Label>
-              <Select value={formData.code_id} onValueChange={(val) => setFormData({ ...formData, code_id: val })}>
+              <Select value={formData.code_id || undefined} onValueChange={(val) => setFormData({ ...formData, code_id: val })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionner un code" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Aucun code</SelectItem>
                   {codes?.map((code) => (
                     <SelectItem key={code.id} value={code.id}>
                       {code.titre}
