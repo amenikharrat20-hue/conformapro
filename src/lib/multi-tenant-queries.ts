@@ -433,3 +433,164 @@ export const toggleSiteVeilleDomaine = async (
   if (error) throw error;
   return data;
 };
+
+// ==================== CLIENT USERS MANAGEMENT ====================
+
+export const inviteClientUser = async (
+  email: string,
+  fullName: string,
+  role: string,
+  clientId: string,
+  siteIds: string[]
+) => {
+  // First, check if user already exists
+  const { data: existingProfile } = await supabase
+    .from("profiles")
+    .select("id, email, client_id")
+    .eq("email", email)
+    .single();
+
+  if (existingProfile) {
+    // User exists - verify same client
+    if (existingProfile.client_id && existingProfile.client_id !== clientId) {
+      throw new Error("Cet utilisateur appartient à un autre client");
+    }
+
+    // Update existing user
+    await updateClientUserAccess(existingProfile.id, role, clientId, siteIds);
+    return { action: 'updated', userId: existingProfile.id };
+  }
+
+  // User doesn't exist - create via Supabase Auth signUp
+  // Note: In production, you'd use admin.inviteUserByEmail with service role key
+  // For now, we'll return that invite is needed
+  return {
+    action: 'invite_needed',
+    email,
+    fullName,
+    role,
+    clientId,
+    siteIds,
+  };
+};
+
+export const createUserProfile = async (
+  userId: string,
+  email: string,
+  fullName: string,
+  role: string,
+  clientId: string,
+  siteIds: string[]
+) => {
+  // Create profile
+  const { error: profileError } = await supabase
+    .from("profiles")
+    .upsert({
+      id: userId,
+      email,
+      nom: fullName.split(' ')[0] || fullName,
+      prenom: fullName.split(' ').slice(1).join(' ') || '',
+      client_id: clientId,
+    });
+
+  if (profileError) throw profileError;
+
+  // Delete existing roles
+  await supabase
+    .from("user_roles")
+    .delete()
+    .eq("user_id", userId);
+
+  // Insert new role (using type assertion since types may not be updated)
+  const { error: roleError } = await supabase
+    .from("user_roles")
+    .insert([{ user_id: userId, role: role }] as any);
+
+  if (roleError) throw roleError;
+
+  // Create access scopes
+  const scopes = siteIds.map(siteId => ({
+    utilisateur_id: userId,
+    site_id: siteId,
+    read_only: role === 'lecteur',
+  }));
+
+  const { error: scopesError } = await supabase
+    .from("access_scopes")
+    .insert(scopes);
+
+  if (scopesError) throw scopesError;
+};
+
+export const updateClientUserAccess = async (
+  userId: string,
+  role: string,
+  clientId: string,
+  siteIds: string[]
+) => {
+  // Update user role - delete and re-insert
+  await supabase
+    .from("user_roles")
+    .delete()
+    .eq("user_id", userId);
+
+  // Insert new role
+  const { error: roleError } = await supabase
+    .from("user_roles")
+    .insert([{ user_id: userId, role: role }] as any);
+
+  if (roleError) throw roleError;
+
+  // Delete existing access scopes for this client's sites
+  const { data: clientSites } = await supabase
+    .from("sites")
+    .select("id")
+    .eq("client_id", clientId);
+
+  if (clientSites) {
+    const siteIdsList = clientSites.map(s => s.id);
+    await supabase
+      .from("access_scopes")
+      .delete()
+      .eq("utilisateur_id", userId)
+      .in("site_id", siteIdsList);
+  }
+
+  // Create new access scopes
+  const scopes = siteIds.map(siteId => ({
+    utilisateur_id: userId,
+    site_id: siteId,
+    read_only: role === 'lecteur',
+  }));
+
+  await supabase
+    .from("access_scopes")
+    .upsert(scopes);
+};
+
+export const fetchClientUsers = async (clientId: string) => {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select(`
+      *,
+      user_roles(role),
+      access_scopes(
+        site_id,
+        read_only,
+        sites(nom_site)
+      )
+    `)
+    .eq("client_id", clientId)
+    .order("nom");
+
+  if (error) throw error;
+  return data;
+};
+
+export const resendInvite = async (email: string) => {
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${window.location.origin}/`,
+  });
+
+  if (error) throw error;
+};

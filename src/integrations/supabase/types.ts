@@ -1604,6 +1604,16 @@ export type Database = {
         }
         Returns: boolean
       }
+      invite_or_update_client_user: {
+        Args: {
+          p_client_id: string
+          p_email: string
+          p_full_name: string
+          p_role: Database["public"]["Enums"]["app_role"]
+          p_site_ids: string[]
+        }
+        Returns: Json
+      }
       run_integrity_checks: { Args: never; Returns: Json }
     }
     Enums: {

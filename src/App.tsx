@@ -33,6 +33,7 @@ import TexteDetail from "./pages/TexteDetail";
 import TexteForm from "./pages/TexteForm";
 import GestionUtilisateurs from "./pages/GestionUtilisateurs";
 import GestionRoles from "./pages/GestionRoles";
+import ClientUsers from "./pages/ClientUsers";
 import ComingSoon from "./pages/ComingSoon";
 import NotFound from "./pages/NotFound";
 
@@ -102,6 +103,7 @@ const App = () => (
                           <Route path="/veille/textes/:id/articles" element={<GestionArticles />} />
                           <Route path="/utilisateurs" element={<GestionUtilisateurs />} />
                           <Route path="/roles" element={<GestionRoles />} />
+                          <Route path="/client-users" element={<ClientUsers />} />
                           <Route path="/dossier" element={<DossierReglementaire />} />
                           <Route path="/controles" element={<ControlesTechniques />} />
                           <Route path="/incidents" element={<Incidents />} />
