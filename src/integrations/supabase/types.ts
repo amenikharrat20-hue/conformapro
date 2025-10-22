@@ -535,6 +535,36 @@ export type Database = {
         }
         Relationships: []
       }
+      codes: {
+        Row: {
+          created_at: string
+          deleted_at: string | null
+          description: string | null
+          id: string
+          structure: Json | null
+          titre: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          structure?: Json | null
+          titre: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          structure?: Json | null
+          titre?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       conformite: {
         Row: {
           applicabilite_id: string
@@ -1047,6 +1077,44 @@ export type Database = {
           },
         ]
       }
+      textes_articles: {
+        Row: {
+          contenu: string | null
+          created_at: string | null
+          id: string
+          numero: string
+          ordre: number | null
+          texte_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          contenu?: string | null
+          created_at?: string | null
+          id?: string
+          numero: string
+          ordre?: number | null
+          texte_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          contenu?: string | null
+          created_at?: string | null
+          id?: string
+          numero?: string
+          ordre?: number | null
+          texte_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "textes_articles_texte_id_fkey"
+            columns: ["texte_id"]
+            isOneToOne: false
+            referencedRelation: "textes_reglementaires"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       textes_domaines: {
         Row: {
           created_at: string | null
@@ -1076,6 +1144,137 @@ export type Database = {
             columns: ["texte_id"]
             isOneToOne: false
             referencedRelation: "actes_reglementaires"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      textes_reglementaires: {
+        Row: {
+          annee: number | null
+          autorite: string | null
+          code_id: string | null
+          created_at: string
+          created_by: string | null
+          date_publication: string | null
+          date_signature: string | null
+          deleted_at: string | null
+          fichier_pdf_url: string | null
+          id: string
+          reference_officielle: string
+          resume: string | null
+          statut_vigueur: Database["public"]["Enums"]["statut_vigueur"]
+          titre: string
+          type: Database["public"]["Enums"]["type_texte_reglementaire"]
+          updated_at: string
+        }
+        Insert: {
+          annee?: number | null
+          autorite?: string | null
+          code_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          date_publication?: string | null
+          date_signature?: string | null
+          deleted_at?: string | null
+          fichier_pdf_url?: string | null
+          id?: string
+          reference_officielle: string
+          resume?: string | null
+          statut_vigueur?: Database["public"]["Enums"]["statut_vigueur"]
+          titre: string
+          type: Database["public"]["Enums"]["type_texte_reglementaire"]
+          updated_at?: string
+        }
+        Update: {
+          annee?: number | null
+          autorite?: string | null
+          code_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          date_publication?: string | null
+          date_signature?: string | null
+          deleted_at?: string | null
+          fichier_pdf_url?: string | null
+          id?: string
+          reference_officielle?: string
+          resume?: string | null
+          statut_vigueur?: Database["public"]["Enums"]["statut_vigueur"]
+          titre?: string
+          type?: Database["public"]["Enums"]["type_texte_reglementaire"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "textes_reglementaires_code_id_fkey"
+            columns: ["code_id"]
+            isOneToOne: false
+            referencedRelation: "codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      textes_reglementaires_domaines: {
+        Row: {
+          created_at: string | null
+          domaine_id: string
+          texte_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          domaine_id: string
+          texte_id: string
+        }
+        Update: {
+          created_at?: string | null
+          domaine_id?: string
+          texte_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "textes_reglementaires_domaines_domaine_id_fkey"
+            columns: ["domaine_id"]
+            isOneToOne: false
+            referencedRelation: "domaines_application"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "textes_reglementaires_domaines_texte_id_fkey"
+            columns: ["texte_id"]
+            isOneToOne: false
+            referencedRelation: "textes_reglementaires"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      textes_reglementaires_sous_domaines: {
+        Row: {
+          created_at: string | null
+          sous_domaine_id: string
+          texte_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          sous_domaine_id: string
+          texte_id: string
+        }
+        Update: {
+          created_at?: string | null
+          sous_domaine_id?: string
+          texte_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "textes_reglementaires_sous_domaines_sous_domaine_id_fkey"
+            columns: ["sous_domaine_id"]
+            isOneToOne: false
+            referencedRelation: "sous_domaines_application"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "textes_reglementaires_sous_domaines_texte_id_fkey"
+            columns: ["texte_id"]
+            isOneToOne: false
+            referencedRelation: "textes_reglementaires"
             referencedColumns: ["id"]
           },
         ]
@@ -1270,6 +1469,7 @@ export type Database = {
         | "rend_applicable"
         | "rectifie"
         | "renvoi"
+      type_texte_reglementaire: "LOI" | "ARRETE" | "DECRET" | "CIRCULAIRE"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1480,6 +1680,7 @@ export const Constants = {
         "rectifie",
         "renvoi",
       ],
+      type_texte_reglementaire: ["LOI", "ARRETE", "DECRET", "CIRCULAIRE"],
     },
   },
 } as const
