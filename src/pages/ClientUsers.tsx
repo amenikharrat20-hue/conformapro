@@ -116,9 +116,10 @@ export default function ClientUsers() {
       `${user.nom} ${user.prenom}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.email?.toLowerCase().includes(searchQuery.toLowerCase());
     
-    const userRole = user.user_roles?.[0];
-    const matchesRole = roleFilter === "all" || 
-      (typeof userRole === 'object' && userRole?.role === roleFilter);
+    // user_roles comes from Supabase as array of objects with role property
+    const userRoleObj = user.user_roles?.[0] as any;
+    const userRoleValue = typeof userRoleObj === 'object' ? userRoleObj?.role : userRoleObj;
+    const matchesRole = roleFilter === "all" || userRoleValue === roleFilter;
     const matchesStatus = statusFilter === "all" || 
       (statusFilter === "actif" && user.actif) ||
       (statusFilter === "inactif" && !user.actif);
@@ -297,8 +298,9 @@ export default function ClientUsers() {
                 <TableBody>
                   {filteredUsers.map((user) => {
                     const userSites = user.access_scopes || [];
-                    const userRole = user.user_roles?.[0];
-                    const role = typeof userRole === 'object' ? userRole?.role : undefined;
+                    // user_roles comes from Supabase as array of objects with role property
+                    const userRoleObj = user.user_roles?.[0] as any;
+                    const role = typeof userRoleObj === 'object' ? userRoleObj?.role : userRoleObj;
 
                     return (
                       <TableRow key={user.id}>
