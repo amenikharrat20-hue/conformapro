@@ -101,14 +101,7 @@ export function AppSidebar() {
                     {item.subItems && item.subItems.length > 0 ? (
                       <>
                         <CollapsibleTrigger asChild>
-                          <SidebarMenuButton
-                            onClick={() => {
-                              if (item.url) {
-                                // Navigate to parent URL if it exists
-                                window.location.href = item.url;
-                              }
-                            }}
-                          >
+                          <SidebarMenuButton>
                             <item.icon className="h-4 w-4" />
                             {!isCollapsed && (
                               <>
