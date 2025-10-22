@@ -24,7 +24,8 @@ export default function Clients() {
   
   const [searchQuery, setSearchQuery] = useState("");
   const [statutFilter, setStatutFilter] = useState<string>("all");
-  const [abonnementFilter, setAbonnementFilter] = useState<string>("all");
+  const [secteurFilter, setSecteurFilter] = useState<string>("all");
+  const [gouvernoratFilter, setGouvernoratFilter] = useState<string>("all");
   const [clientFormOpen, setClientFormOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<ClientRow | undefined>();
   const [sitesDrawerOpen, setSitesDrawerOpen] = useState(false);
@@ -65,12 +66,14 @@ export default function Clients() {
   const filteredClients = clients?.filter(client => {
     const matchesSearch = 
       client.nom_legal.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (client.secteur && client.secteur.toLowerCase().includes(searchQuery.toLowerCase()));
+      (client.matricule_fiscal && client.matricule_fiscal.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (client.rne_rc && client.rne_rc.toLowerCase().includes(searchQuery.toLowerCase()));
     
     const matchesStatut = statutFilter === "all" || client.statut === statutFilter;
-    const matchesAbonnement = abonnementFilter === "all" || client.abonnement_type === abonnementFilter;
+    const matchesSecteur = secteurFilter === "all" || client.secteur === secteurFilter;
+    const matchesGouvernorat = gouvernoratFilter === "all" || client.gouvernorat === gouvernoratFilter;
     
-    return matchesSearch && matchesStatut && matchesAbonnement;
+    return matchesSearch && matchesStatut && matchesSecteur && matchesGouvernorat;
   }) || [];
 
   const handleEdit = (client: ClientRow) => {
@@ -139,39 +142,74 @@ export default function Clients() {
       {/* Search and filters */}
       <Card className="shadow-soft">
         <CardContent className="pt-6">
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Rechercher par nom ou secteur..."
+                placeholder="Rechercher par nom, MF ou RNE..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
               />
             </div>
-            <Select value={statutFilter} onValueChange={setStatutFilter}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Statut" />
-              </SelectTrigger>
-              <SelectContent className="bg-background border border-border z-50">
-                <SelectItem value="all">Tous les statuts</SelectItem>
-                <SelectItem value="actif">Actif</SelectItem>
-                <SelectItem value="inactif">Inactif</SelectItem>
-                <SelectItem value="suspendu">Suspendu</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={abonnementFilter} onValueChange={setAbonnementFilter}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Abonnement" />
-              </SelectTrigger>
-              <SelectContent className="bg-background border border-border z-50">
-                <SelectItem value="all">Tous les abonnements</SelectItem>
-                <SelectItem value="essentiel">Essentiel</SelectItem>
-                <SelectItem value="standard">Standard</SelectItem>
-                <SelectItem value="premium">Premium</SelectItem>
-                <SelectItem value="entreprise">Entreprise</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Select value={gouvernoratFilter} onValueChange={setGouvernoratFilter}>
+                <SelectTrigger className="w-full sm:w-[200px]">
+                  <SelectValue placeholder="Gouvernorat" />
+                </SelectTrigger>
+                <SelectContent className="bg-background border border-border z-50 max-h-60 overflow-y-auto">
+                  <SelectItem value="all">Tous les gouvernorats</SelectItem>
+                  <SelectItem value="Ariana">Ariana</SelectItem>
+                  <SelectItem value="Béja">Béja</SelectItem>
+                  <SelectItem value="Ben Arous">Ben Arous</SelectItem>
+                  <SelectItem value="Bizerte">Bizerte</SelectItem>
+                  <SelectItem value="Gabès">Gabès</SelectItem>
+                  <SelectItem value="Gafsa">Gafsa</SelectItem>
+                  <SelectItem value="Jendouba">Jendouba</SelectItem>
+                  <SelectItem value="Kairouan">Kairouan</SelectItem>
+                  <SelectItem value="Kasserine">Kasserine</SelectItem>
+                  <SelectItem value="Kébili">Kébili</SelectItem>
+                  <SelectItem value="Le Kef">Le Kef</SelectItem>
+                  <SelectItem value="Mahdia">Mahdia</SelectItem>
+                  <SelectItem value="La Manouba">La Manouba</SelectItem>
+                  <SelectItem value="Médenine">Médenine</SelectItem>
+                  <SelectItem value="Monastir">Monastir</SelectItem>
+                  <SelectItem value="Nabeul">Nabeul</SelectItem>
+                  <SelectItem value="Sfax">Sfax</SelectItem>
+                  <SelectItem value="Sidi Bouzid">Sidi Bouzid</SelectItem>
+                  <SelectItem value="Siliana">Siliana</SelectItem>
+                  <SelectItem value="Sousse">Sousse</SelectItem>
+                  <SelectItem value="Tataouine">Tataouine</SelectItem>
+                  <SelectItem value="Tozeur">Tozeur</SelectItem>
+                  <SelectItem value="Tunis">Tunis</SelectItem>
+                  <SelectItem value="Zaghouan">Zaghouan</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={secteurFilter} onValueChange={setSecteurFilter}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder="Secteur" />
+                </SelectTrigger>
+                <SelectContent className="bg-background border border-border z-50">
+                  <SelectItem value="all">Tous les secteurs</SelectItem>
+                  <SelectItem value="Industriel">Industriel</SelectItem>
+                  <SelectItem value="Services">Services</SelectItem>
+                  <SelectItem value="Commerce">Commerce</SelectItem>
+                  <SelectItem value="Administration">Administration</SelectItem>
+                  <SelectItem value="Autre">Autre</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={statutFilter} onValueChange={setStatutFilter}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder="Statut" />
+                </SelectTrigger>
+                <SelectContent className="bg-background border border-border z-50">
+                  <SelectItem value="all">Tous les statuts</SelectItem>
+                  <SelectItem value="actif">Actif</SelectItem>
+                  <SelectItem value="suspendu">Suspendu</SelectItem>
+                  <SelectItem value="archivé">Archivé</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -205,6 +243,7 @@ export default function Clients() {
       </div>
 
       {/* Clients list */}
+      {/* Clients list */}
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -232,25 +271,16 @@ export default function Clients() {
                       <div className="flex-1 min-w-0">
                         <CardTitle className="text-lg truncate">{client.nom_legal}</CardTitle>
                         <CardDescription className="text-xs mt-1">
-                          {client.rne_rc || "Pas de RNE"}
+                          {client.rne_rc || client.matricule_fiscal || "Pas de référence"}
                         </CardDescription>
                       </div>
                     </div>
-                    <div className="flex flex-col gap-1">
-                      {client.statut && (
-                        <Badge 
-                          variant={client.statut === "actif" ? "default" : "secondary"}
-                          className="text-xs"
-                        >
-                          {client.statut}
-                        </Badge>
-                      )}
-                      {client.abonnement_type && (
-                        <Badge variant="outline" className="text-xs capitalize">
-                          {client.abonnement_type}
-                        </Badge>
-                      )}
-                    </div>
+                    <Badge 
+                      variant={client.statut === "actif" ? "default" : "secondary"}
+                      className="text-xs"
+                    >
+                      {client.statut || "actif"}
+                    </Badge>
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -311,11 +341,11 @@ export default function Clients() {
           <CardContent className="py-12 text-center">
             <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground mb-4">
-              {searchQuery || statutFilter !== "all" || abonnementFilter !== "all" 
+              {searchQuery || statutFilter !== "all" || secteurFilter !== "all" || gouvernoratFilter !== "all"
                 ? "Aucun client ne correspond aux filtres" 
                 : "Aucun client enregistré"}
             </p>
-            {!searchQuery && statutFilter === "all" && abonnementFilter === "all" && (
+            {!searchQuery && statutFilter === "all" && secteurFilter === "all" && gouvernoratFilter === "all" && (
               <Button 
                 onClick={() => {
                   setEditingClient(undefined);

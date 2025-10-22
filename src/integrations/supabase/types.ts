@@ -476,13 +476,17 @@ export type Database = {
         Row: {
           abonnement_type: string | null
           adresse_siege: string | null
+          code_postal: string | null
           contacts: Json | null
           contrat_sla: string | null
           couleur_primaire: string | null
           couleur_secondaire: string | null
           created_at: string
+          delegation: string | null
+          email: string | null
           gouvernorat: Database["public"]["Enums"]["gouvernorat"] | null
           id: string
+          localite: string | null
           logo_url: string | null
           matricule_fiscal: string | null
           nature: string | null
@@ -490,19 +494,26 @@ export type Database = {
           notes: string | null
           rne_rc: string | null
           secteur: Database["public"]["Enums"]["secteur"] | null
+          site_web: string | null
           statut: string | null
+          telephone: string | null
           updated_at: string
+          ville: string | null
         }
         Insert: {
           abonnement_type?: string | null
           adresse_siege?: string | null
+          code_postal?: string | null
           contacts?: Json | null
           contrat_sla?: string | null
           couleur_primaire?: string | null
           couleur_secondaire?: string | null
           created_at?: string
+          delegation?: string | null
+          email?: string | null
           gouvernorat?: Database["public"]["Enums"]["gouvernorat"] | null
           id?: string
+          localite?: string | null
           logo_url?: string | null
           matricule_fiscal?: string | null
           nature?: string | null
@@ -510,19 +521,26 @@ export type Database = {
           notes?: string | null
           rne_rc?: string | null
           secteur?: Database["public"]["Enums"]["secteur"] | null
+          site_web?: string | null
           statut?: string | null
+          telephone?: string | null
           updated_at?: string
+          ville?: string | null
         }
         Update: {
           abonnement_type?: string | null
           adresse_siege?: string | null
+          code_postal?: string | null
           contacts?: Json | null
           contrat_sla?: string | null
           couleur_primaire?: string | null
           couleur_secondaire?: string | null
           created_at?: string
+          delegation?: string | null
+          email?: string | null
           gouvernorat?: Database["public"]["Enums"]["gouvernorat"] | null
           id?: string
+          localite?: string | null
           logo_url?: string | null
           matricule_fiscal?: string | null
           nature?: string | null
@@ -530,8 +548,11 @@ export type Database = {
           notes?: string | null
           rne_rc?: string | null
           secteur?: Database["public"]["Enums"]["secteur"] | null
+          site_web?: string | null
           statut?: string | null
+          telephone?: string | null
           updated_at?: string
+          ville?: string | null
         }
         Relationships: []
       }
