@@ -40,16 +40,15 @@ const menuItems: MenuItem[] = [
   { title: "Tableau de bord", url: "/", icon: LayoutDashboard },
   { title: "Clients", url: "/clients", icon: Building2 },
   { title: "Sites", url: "/sites", icon: Factory },
-  { title: "Domaines", url: "/domaines", icon: FolderOpen },
   { 
     title: "Veille réglementaire", 
     url: "/veille", 
     icon: FileText,
     subItems: [
       { title: "Bibliothèque", url: "/veille/bibliotheque" },
+      { title: "Domaines", url: "/veille/domaines" },
       { title: "Évaluation de conformité", url: "/veille/conformite" },
-      { title: "Plan d'action", url: "/veille/actions" },
-      { title: "Gestion des domaines", url: "/veille/domaines" }
+      { title: "Plan d'action", url: "/veille/actions" }
     ]
   },
   { title: "Dossier réglementaire", url: "/dossier", icon: FileCheck },

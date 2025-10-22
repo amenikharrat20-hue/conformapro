@@ -22,9 +22,8 @@ import BibliothequeArticleVersions from "./pages/BibliothequeArticleVersions";
 import ArticleVersions from "./pages/ArticleVersions";
 import ConformiteEvaluation from "./pages/ConformiteEvaluation";
 import PlanAction from "./pages/PlanAction";
-import GestionDomaines from "./pages/GestionDomaines";
-import GestionArticles from "./pages/GestionArticles";
 import DomainesPage from "./pages/DomainesPage";
+import GestionArticles from "./pages/GestionArticles";
 import DossierReglementaire from "./pages/DossierReglementaire";
 import ControlesTechniques from "./pages/ControlesTechniques";
 import Incidents from "./pages/Incidents";
@@ -95,9 +94,8 @@ const App = () => (
                           <Route path="/veille/bibliotheque/articles/:articleId/versions" element={<BibliothequeArticleVersions />} />
                           <Route path="/veille/conformite" element={<ConformiteEvaluation />} />
                           <Route path="/veille/actions" element={<PlanAction />} />
-                          <Route path="/veille/domaines" element={<GestionDomaines />} />
+                          <Route path="/veille/domaines" element={<DomainesPage />} />
                           <Route path="/veille/textes/:id/articles" element={<GestionArticles />} />
-                          <Route path="/domaines" element={<DomainesPage />} />
                           <Route path="/dossier" element={<DossierReglementaire />} />
                           <Route path="/controles" element={<ControlesTechniques />} />
                           <Route path="/incidents" element={<Incidents />} />
