@@ -48,9 +48,7 @@ const clientSchema = z.object({
   adresse_siege: z.string().optional(),
   gouvernorat: z.string().optional(),
   delegation: z.string().optional(),
-  localite: z.string().optional(),
   code_postal: z.string().optional(),
-  ville: z.string().optional(),
   statut: z.string().optional(),
   sites: z.array(siteSchema).optional(),
 });
@@ -366,20 +364,11 @@ const createMutation = useMutation({
                   </div>
 
                   <div>
-                    <Label htmlFor="delegation">Délégation *</Label>
+                    <Label htmlFor="delegation">Délégation</Label>
                     <Input 
                       id="delegation" 
                       {...register("delegation")} 
                       placeholder="Ex: La Marsa"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="localite">Localité *</Label>
-                    <Input 
-                      id="localite" 
-                      {...register("localite")} 
-                      placeholder="Ex: Sidi Daoued"
                     />
                   </div>
 
@@ -389,15 +378,6 @@ const createMutation = useMutation({
                       id="code_postal" 
                       {...register("code_postal")} 
                       placeholder="Ex: 2046"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="ville">Ville</Label>
-                    <Input 
-                      id="ville" 
-                      {...register("ville")} 
-                      placeholder="Ex: Tunis"
                     />
                   </div>
                 </div>

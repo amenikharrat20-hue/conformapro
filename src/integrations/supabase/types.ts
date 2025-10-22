@@ -493,7 +493,7 @@ export type Database = {
           nom_legal: string
           notes: string | null
           rne_rc: string | null
-          secteur: Database["public"]["Enums"]["secteur"] | null
+          secteur: string | null
           site_web: string | null
           statut: string | null
           telephone: string | null
@@ -520,7 +520,7 @@ export type Database = {
           nom_legal: string
           notes?: string | null
           rne_rc?: string | null
-          secteur?: Database["public"]["Enums"]["secteur"] | null
+          secteur?: string | null
           site_web?: string | null
           statut?: string | null
           telephone?: string | null
@@ -547,7 +547,7 @@ export type Database = {
           nom_legal?: string
           notes?: string | null
           rne_rc?: string | null
-          secteur?: Database["public"]["Enums"]["secteur"] | null
+          secteur?: string | null
           site_web?: string | null
           statut?: string | null
           telephone?: string | null
@@ -903,7 +903,6 @@ export type Database = {
           created_at: string | null
           exigences_types: string[] | null
           id: string
-          secteur: Database["public"]["Enums"]["secteur"]
           updated_at: string | null
         }
         Insert: {
@@ -911,7 +910,6 @@ export type Database = {
           created_at?: string | null
           exigences_types?: string[] | null
           id?: string
-          secteur: Database["public"]["Enums"]["secteur"]
           updated_at?: string | null
         }
         Update: {
@@ -919,7 +917,6 @@ export type Database = {
           created_at?: string | null
           exigences_types?: string[] | null
           id?: string
-          secteur?: Database["public"]["Enums"]["secteur"]
           updated_at?: string | null
         }
         Relationships: []
@@ -1680,17 +1677,6 @@ export type Database = {
       niveau_risque: "Faible" | "Moyen" | "Élevé" | "Critique"
       niveau_structure: "livre" | "titre" | "chapitre" | "section"
       priorite: "Basse" | "Moyenne" | "Haute" | "Critique"
-      secteur:
-        | "Alimentaire"
-        | "Automobile"
-        | "Chimie"
-        | "Textile"
-        | "Construction"
-        | "Électronique"
-        | "Pharmaceutique"
-        | "Services"
-        | "Logistique"
-        | "Autre"
       statut_action: "A_faire" | "En_cours" | "Termine" | "Bloque"
       statut_lecture: "A_lire" | "Lu" | "Valide"
       statut_texte: "en_vigueur" | "abroge" | "modifie"
@@ -1888,18 +1874,6 @@ export const Constants = {
       niveau_risque: ["Faible", "Moyen", "Élevé", "Critique"],
       niveau_structure: ["livre", "titre", "chapitre", "section"],
       priorite: ["Basse", "Moyenne", "Haute", "Critique"],
-      secteur: [
-        "Alimentaire",
-        "Automobile",
-        "Chimie",
-        "Textile",
-        "Construction",
-        "Électronique",
-        "Pharmaceutique",
-        "Services",
-        "Logistique",
-        "Autre",
-      ],
       statut_action: ["A_faire", "En_cours", "Termine", "Bloque"],
       statut_lecture: ["A_lire", "Lu", "Valide"],
       statut_texte: ["en_vigueur", "abroge", "modifie"],
