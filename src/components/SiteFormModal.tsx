@@ -17,7 +17,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { 
+import {
   createSite, 
   updateSite,
   fetchClients,
@@ -30,7 +30,6 @@ import {
   toggleSiteVeilleDomaine,
   listGouvernorats,
   listDelegationsByGouvernorat,
-  listLocalitesByDelegation,
 } from "@/lib/multi-tenant-queries";
 import { Database } from "@/integrations/supabase/types";
 import { useToast } from "@/hooks/use-toast";
@@ -39,6 +38,7 @@ import { Card } from "@/components/ui/card";
 import { Building2, Settings, AlertCircle, MapPin, Activity, Wrench } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
+import { LocationPicker } from "@/components/LocationPicker";
 
 type SiteRow = Database["public"]["Tables"]["sites"]["Row"];
 
@@ -52,7 +52,7 @@ const siteSchema = z.object({
   adresse: z.string().optional(),
   gouvernorat: z.string().min(1, "Le gouvernorat est requis"),
   delegation: z.string().min(1, "La délégation est requise"),
-  localite: z.string().min(1, "La localité est requise"),
+  localite: z.string().optional(),
   code_postal: z.string().optional(),
   ville: z.string().optional(),
   coordonnees_gps_lat: z.coerce.number().optional().nullable(),
@@ -111,7 +111,6 @@ export function SiteFormModal({ open, onOpenChange, site, clientId }: SiteFormMo
   const [isAdmin, setIsAdmin] = useState(false);
   const [activeTab, setActiveTab] = useState("general");
   const [selectedGouvernoratId, setSelectedGouvernoratId] = useState<string | null>(null);
-  const [selectedDelegationId, setSelectedDelegationId] = useState<string | null>(null);
   const [equipements, setEquipements] = useState<Record<string, boolean>>({});
 
   // Check user role
@@ -160,12 +159,6 @@ export function SiteFormModal({ open, onOpenChange, site, clientId }: SiteFormMo
     queryKey: ["delegations", selectedGouvernoratId],
     queryFn: () => listDelegationsByGouvernorat(selectedGouvernoratId!),
     enabled: !!selectedGouvernoratId,
-  });
-
-  const { data: localites = [] } = useQuery({
-    queryKey: ["localites", selectedDelegationId],
-    queryFn: () => listLocalitesByDelegation(selectedDelegationId!),
-    enabled: !!selectedDelegationId,
   });
 
   const { data: modulesSysteme = [] } = useQuery({
@@ -358,30 +351,13 @@ export function SiteFormModal({ open, onOpenChange, site, clientId }: SiteFormMo
   const handleGouvernoratChange = async (gouvernoratNom: string) => {
     setValue("gouvernorat", gouvernoratNom);
     setValue("delegation", "");
-    setValue("localite", "");
-    setValue("code_postal", "");
     
     const gov = gouvernorats.find((g: any) => g.nom === gouvernoratNom);
     setSelectedGouvernoratId(gov?.id || null);
-    setSelectedDelegationId(null);
   };
 
   const handleDelegationChange = async (delegationNom: string) => {
     setValue("delegation", delegationNom);
-    setValue("localite", "");
-    setValue("code_postal", "");
-    
-    const deleg = delegations.find((d: any) => d.nom === delegationNom);
-    setSelectedDelegationId(deleg?.id || null);
-  };
-
-  const handleLocaliteChange = (localiteNom: string) => {
-    setValue("localite", localiteNom);
-    
-    const loc = localites.find((l: any) => l.nom === localiteNom);
-    if (loc?.code_postal) {
-      setValue("code_postal", loc.code_postal);
-    }
   };
 
   return (
@@ -602,82 +578,16 @@ export function SiteFormModal({ open, onOpenChange, site, clientId }: SiteFormMo
                       <p className="text-sm text-destructive mt-1">{errors.delegation.message}</p>
                     )}
                   </div>
-
-                  <div>
-                    <Label htmlFor="localite">Localité *</Label>
-                    <Controller
-                      name="localite"
-                      control={control}
-                      render={({ field }) => (
-                        <Select
-                          onValueChange={(value) => {
-                            field.onChange(value);
-                            handleLocaliteChange(value);
-                          }}
-                          value={field.value}
-                          disabled={!selectedDelegationId}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Sélectionner..." />
-                          </SelectTrigger>
-                          <SelectContent className="bg-background border border-border z-50 max-h-60 overflow-y-auto">
-                            {localites.map((loc: any) => (
-                              <SelectItem key={loc.id} value={loc.nom}>
-                                {loc.nom}
-                                {loc.code_postal && (
-                                  <span className="text-muted-foreground ml-2">
-                                    ({loc.code_postal})
-                                  </span>
-                                )}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
-                    />
-                    {errors.localite && (
-                      <p className="text-sm text-destructive mt-1">{errors.localite.message}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <Label htmlFor="code_postal">Code postal</Label>
-                    <Input id="code_postal" {...register("code_postal")} placeholder="Auto depuis localité" />
-                  </div>
-
-                  <div className="col-span-2">
-                    <Label htmlFor="ville">Ville</Label>
-                    <Input id="ville" {...register("ville")} />
-                  </div>
                 </div>
 
-                <div className="border-t pt-4">
-                  <Label className="text-sm font-medium mb-2 block">
-                    Coordonnées GPS (optionnel)
-                  </Label>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="coordonnees_gps_lat" className="text-xs">Latitude</Label>
-                      <Input
-                        id="coordonnees_gps_lat"
-                        type="number"
-                        step="any"
-                        {...register("coordonnees_gps_lat")}
-                        placeholder="Ex: 36.8065"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="coordonnees_gps_lng" className="text-xs">Longitude</Label>
-                      <Input
-                        id="coordonnees_gps_lng"
-                        type="number"
-                        step="any"
-                        {...register("coordonnees_gps_lng")}
-                        placeholder="Ex: 10.1815"
-                      />
-                    </div>
-                  </div>
-                </div>
+                <LocationPicker
+                  lat={watch("coordonnees_gps_lat")}
+                  lng={watch("coordonnees_gps_lng")}
+                  onLocationChange={(lat, lng) => {
+                    setValue("coordonnees_gps_lat", lat);
+                    setValue("coordonnees_gps_lng", lng);
+                  }}
+                />
               </div>
             </TabsContent>
 
