@@ -1,4 +1,4 @@
-import { LayoutDashboard, FileText, ClipboardCheck, AlertTriangle, ShieldCheck, GraduationCap, HardHat, Users, FileCheck, BookOpen, Menu, Building2, Factory, Library, ChevronDown, FolderOpen } from "lucide-react";
+import { LayoutDashboard, FileText, ClipboardCheck, AlertTriangle, ShieldCheck, GraduationCap, HardHat, Users, FileCheck, BookOpen, Menu, Building2, Factory, Library, ChevronDown, FolderOpen, Settings, UserCog, Shield } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useState } from "react";
 import {
@@ -37,7 +37,7 @@ interface MenuItem {
 }
 
 const menuItems: MenuItem[] = [
-  { title: "Tableau de bord", url: "/", icon: LayoutDashboard },
+  { title: "Tableau de bord", url: "/dashboard", icon: LayoutDashboard },
   { title: "Clients", url: "/clients", icon: Building2 },
   { title: "Sites", url: "/sites", icon: Factory },
   { 
@@ -59,6 +59,11 @@ const menuItems: MenuItem[] = [
   { title: "EPI & Équipements", url: "/epi", icon: HardHat },
   { title: "Prestataires", url: "/prestataires", icon: Users },
   { title: "Permis de travail", url: "/permis", icon: FileCheck },
+];
+
+const administrationItems: MenuItem[] = [
+  { title: "Gestion des utilisateurs", url: "/utilisateurs", icon: UserCog },
+  { title: "Gestion des rôles", url: "/roles", icon: Shield },
 ];
 
 export function AppSidebar() {
@@ -152,6 +157,34 @@ export function AppSidebar() {
                     )}
                   </SidebarMenuItem>
                 </Collapsible>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>
+            <Settings className="h-4 w-4 mr-2" />
+            {!isCollapsed && "Administration"}
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {administrationItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to={item.url!}
+                      className={({ isActive }) =>
+                        isActive
+                          ? "bg-sidebar-accent text-sidebar-primary font-medium"
+                          : "hover:bg-sidebar-accent/50"
+                      }
+                    >
+                      <item.icon className="h-4 w-4" />
+                      {!isCollapsed && <span>{item.title}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
               ))}
             </SidebarMenu>
           </SidebarGroupContent>
