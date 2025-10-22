@@ -132,13 +132,6 @@ export function SiteFormModal({ open, onOpenChange, site, clientId }: SiteFormMo
     checkRole();
   }, []);
 
-  // Load equipements from site data
-  useEffect(() => {
-    if (site?.equipements_critiques) {
-      setEquipements(site.equipements_critiques as Record<string, boolean>);
-    }
-  }, [site]);
-
   const { data: clients = [] } = useQuery({
     queryKey: ["clients"],
     queryFn: fetchClients,
@@ -185,6 +178,21 @@ export function SiteFormModal({ open, onOpenChange, site, clientId }: SiteFormMo
 
   const veilleModule = siteModules.find((sm: any) => sm.modules_systeme?.code === 'VEILLE');
   const isVeilleEnabled = veilleModule?.enabled || false;
+
+  // Load equipements from site data and set gouvernorat for delegation loading
+  useEffect(() => {
+    if (site?.equipements_critiques) {
+      setEquipements(site.equipements_critiques as Record<string, boolean>);
+    }
+    
+    // When editing a site, load its gouvernorat to populate delegations
+    if (site?.gouvernorat && gouvernorats.length > 0) {
+      const gov = gouvernorats.find((g: any) => g.nom === site.gouvernorat);
+      if (gov) {
+        setSelectedGouvernoratId(gov.id);
+      }
+    }
+  }, [site, gouvernorats]);
   
   const {
     register,
@@ -209,17 +217,38 @@ export function SiteFormModal({ open, onOpenChange, site, clientId }: SiteFormMo
       localite: site.localite || "",
       code_postal: site.code_postal || "",
       ville: site.ville || "",
-      coordonnees_gps_lat: site.coordonnees_gps_lat || null,
-      coordonnees_gps_lng: site.coordonnees_gps_lng || null,
+      coordonnees_gps_lat: site.coordonnees_gps_lat ? Number(site.coordonnees_gps_lat) : null,
+      coordonnees_gps_lng: site.coordonnees_gps_lng ? Number(site.coordonnees_gps_lng) : null,
       effectif: site.effectif || 0,
-      superficie: site.superficie || null,
+      superficie: site.superficie ? Number(site.superficie) : null,
       activite: site.activite || "",
     } : {
       client_id: clientId || "",
+      nom_site: "",
+      code_site: "",
+      classification: "",
+      secteur_activite: "",
       est_siege: false,
+      adresse: "",
+      gouvernorat: "",
+      delegation: "",
       effectif: 0,
+      superficie: null,
+      activite: "",
+      coordonnees_gps_lat: null,
+      coordonnees_gps_lng: null,
     },
   });
+  
+  // Reset form when modal closes or site changes
+  useEffect(() => {
+    if (!open) {
+      reset();
+      setSelectedGouvernoratId(null);
+      setEquipements({});
+      setActiveTab("general");
+    }
+  }, [open, reset]);
 
   const createMutation = useMutation({
     mutationFn: async (data: SiteFormData) => {
