@@ -582,6 +582,7 @@ export type Database = {
           code: string
           created_at: string | null
           deleted_at: string | null
+          description: string | null
           id: string
           libelle: string
           updated_at: string | null
@@ -591,6 +592,7 @@ export type Database = {
           code: string
           created_at?: string | null
           deleted_at?: string | null
+          description?: string | null
           id?: string
           libelle: string
           updated_at?: string | null
@@ -600,6 +602,7 @@ export type Database = {
           code?: string
           created_at?: string | null
           deleted_at?: string | null
+          description?: string | null
           id?: string
           libelle?: string
           updated_at?: string | null
@@ -955,6 +958,7 @@ export type Database = {
           code: string
           created_at: string | null
           deleted_at: string | null
+          description: string | null
           domaine_id: string
           id: string
           libelle: string
@@ -966,6 +970,7 @@ export type Database = {
           code: string
           created_at?: string | null
           deleted_at?: string | null
+          description?: string | null
           domaine_id: string
           id?: string
           libelle: string
@@ -977,6 +982,7 @@ export type Database = {
           code?: string
           created_at?: string | null
           deleted_at?: string | null
+          description?: string | null
           domaine_id?: string
           id?: string
           libelle?: string
