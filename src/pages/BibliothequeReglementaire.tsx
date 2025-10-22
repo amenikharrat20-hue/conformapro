@@ -59,7 +59,7 @@ export default function BibliothequeReglementaire() {
     enabled: domaineFilter !== "all",
   });
 
-  const { data: result, isLoading } = useQuery({
+  const { data: result, isLoading, error } = useQuery({
     queryKey: ["textes-reglementaires", searchTerm, typeFilter, domaineFilter, sousDomaineFilter, statutFilter, anneeFilter, page, sortBy, sortOrder],
     queryFn: () =>
       textesReglementairesQueries.getAll({
@@ -75,6 +75,11 @@ export default function BibliothequeReglementaire() {
         sortOrder,
       }),
   });
+
+  // Show error toast if query fails
+  if (error) {
+    toast.error("Erreur lors du chargement des textes réglementaires");
+  }
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => textesReglementairesQueries.softDelete(id),
@@ -285,7 +290,18 @@ export default function BibliothequeReglementaire() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="text-center py-8 text-muted-foreground">Chargement...</div>
+            <div className="flex flex-col items-center justify-center py-12 gap-3">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <p className="text-muted-foreground">Chargement des textes réglementaires...</p>
+            </div>
+          ) : error ? (
+            <div className="flex flex-col items-center justify-center py-12 gap-3">
+              <FileText className="h-12 w-12 text-destructive" />
+              <p className="text-destructive font-medium">Erreur lors du chargement</p>
+              <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
+                Réessayer
+              </Button>
+            </div>
           ) : textes.length > 0 ? (
             <>
               <div className="overflow-x-auto">

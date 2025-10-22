@@ -36,17 +36,25 @@ export default function BibliothequeArticleVersions() {
     statut_vigueur: "en_vigueur",
   });
 
-  const { data: article, isLoading: articleLoading } = useQuery({
+  const { data: article, isLoading: articleLoading, error: articleError } = useQuery({
     queryKey: ["texte-article", articleId],
     queryFn: () => textesArticlesQueries.getById(articleId!),
     enabled: !!articleId,
   });
 
-  const { data: versions, isLoading: versionsLoading } = useQuery({
+  const { data: versions, isLoading: versionsLoading, error: versionsError } = useQuery({
     queryKey: ["texte-article-versions", articleId],
     queryFn: () => textesArticlesVersionsQueries.getByArticleId(articleId!),
     enabled: !!articleId,
   });
+
+  // Show error toast if queries fail
+  if (articleError) {
+    toast.error("Erreur lors du chargement de l'article");
+  }
+  if (versionsError) {
+    toast.error("Erreur lors du chargement des versions");
+  }
 
   const createVersionMutation = useMutation({
     mutationFn: (data: any) => textesArticlesVersionsQueries.create(data),
@@ -144,18 +152,22 @@ export default function BibliothequeArticleVersions() {
 
   if (articleLoading || versionsLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-muted-foreground">Chargement...</div>
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-3">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <p className="text-muted-foreground">Chargement des versions...</p>
       </div>
     );
   }
 
-  if (!article) {
+  if (articleError || !article) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-        <FileText className="h-16 w-16 text-muted-foreground" />
-        <p className="text-muted-foreground">Article non trouvé</p>
-        <Button onClick={() => navigate("/veille/bibliotheque")}>
+        <FileText className="h-16 w-16 text-destructive" />
+        <p className="text-destructive font-medium">
+          {articleError ? "Erreur lors du chargement" : "Article non trouvé"}
+        </p>
+        <Button variant="outline" onClick={() => navigate("/veille/bibliotheque")}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
           Retour à la bibliothèque
         </Button>
       </div>
