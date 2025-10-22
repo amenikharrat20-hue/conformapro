@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      access_scopes: {
+        Row: {
+          created_at: string | null
+          id: string
+          read_only: boolean | null
+          site_id: string
+          updated_at: string | null
+          utilisateur_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          read_only?: boolean | null
+          site_id: string
+          updated_at?: string | null
+          utilisateur_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          read_only?: boolean | null
+          site_id?: string
+          updated_at?: string | null
+          utilisateur_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "access_scopes_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "access_scopes_utilisateur_id_fkey"
+            columns: ["utilisateur_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       actes_reglementaires: {
         Row: {
           annee: number | null
@@ -432,48 +474,63 @@ export type Database = {
       }
       clients: {
         Row: {
+          abonnement_type: string | null
           adresse_siege: string | null
           contacts: Json | null
           contrat_sla: string | null
+          couleur_primaire: string | null
+          couleur_secondaire: string | null
           created_at: string
           gouvernorat: Database["public"]["Enums"]["gouvernorat"] | null
           id: string
-          logo: string | null
+          logo_url: string | null
           matricule_fiscal: string | null
+          nature: string | null
           nom_legal: string
           notes: string | null
           rne_rc: string | null
           secteur: Database["public"]["Enums"]["secteur"] | null
+          statut: string | null
           updated_at: string
         }
         Insert: {
+          abonnement_type?: string | null
           adresse_siege?: string | null
           contacts?: Json | null
           contrat_sla?: string | null
+          couleur_primaire?: string | null
+          couleur_secondaire?: string | null
           created_at?: string
           gouvernorat?: Database["public"]["Enums"]["gouvernorat"] | null
           id?: string
-          logo?: string | null
+          logo_url?: string | null
           matricule_fiscal?: string | null
+          nature?: string | null
           nom_legal: string
           notes?: string | null
           rne_rc?: string | null
           secteur?: Database["public"]["Enums"]["secteur"] | null
+          statut?: string | null
           updated_at?: string
         }
         Update: {
+          abonnement_type?: string | null
           adresse_siege?: string | null
           contacts?: Json | null
           contrat_sla?: string | null
+          couleur_primaire?: string | null
+          couleur_secondaire?: string | null
           created_at?: string
           gouvernorat?: Database["public"]["Enums"]["gouvernorat"] | null
           id?: string
-          logo?: string | null
+          logo_url?: string | null
           matricule_fiscal?: string | null
+          nature?: string | null
           nom_legal?: string
           notes?: string | null
           rne_rc?: string | null
           secteur?: Database["public"]["Enums"]["secteur"] | null
+          statut?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -685,6 +742,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          actif: boolean | null
           avatar_url: string | null
           client_id: string | null
           created_at: string
@@ -698,6 +756,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          actif?: boolean | null
           avatar_url?: string | null
           client_id?: string | null
           created_at?: string
@@ -711,6 +770,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          actif?: boolean | null
           avatar_url?: string | null
           client_id?: string | null
           created_at?: string
@@ -814,19 +874,22 @@ export type Database = {
           activite: string | null
           adresse: string | null
           autorite_protection_civile: string | null
+          classification: string | null
           client_id: string
           code_site: string
-          coordonnees_gps: unknown | null
+          coordonnees_gps: unknown
           created_at: string
           documents: Json | null
           effectif: number | null
           email: string | null
+          equipements_critiques: Json | null
           gouvernorat: Database["public"]["Enums"]["gouvernorat"] | null
           id: string
           niveau_risque: Database["public"]["Enums"]["niveau_risque"] | null
           nom_site: string
           prestataires_affectes: Json | null
           responsable_site: string | null
+          superficie: number | null
           telephone: string | null
           updated_at: string
         }
@@ -834,19 +897,22 @@ export type Database = {
           activite?: string | null
           adresse?: string | null
           autorite_protection_civile?: string | null
+          classification?: string | null
           client_id: string
           code_site: string
-          coordonnees_gps?: unknown | null
+          coordonnees_gps?: unknown
           created_at?: string
           documents?: Json | null
           effectif?: number | null
           email?: string | null
+          equipements_critiques?: Json | null
           gouvernorat?: Database["public"]["Enums"]["gouvernorat"] | null
           id?: string
           niveau_risque?: Database["public"]["Enums"]["niveau_risque"] | null
           nom_site: string
           prestataires_affectes?: Json | null
           responsable_site?: string | null
+          superficie?: number | null
           telephone?: string | null
           updated_at?: string
         }
@@ -854,19 +920,22 @@ export type Database = {
           activite?: string | null
           adresse?: string | null
           autorite_protection_civile?: string | null
+          classification?: string | null
           client_id?: string
           code_site?: string
-          coordonnees_gps?: unknown | null
+          coordonnees_gps?: unknown
           created_at?: string
           documents?: Json | null
           effectif?: number | null
           email?: string | null
+          equipements_critiques?: Json | null
           gouvernorat?: Database["public"]["Enums"]["gouvernorat"] | null
           id?: string
           niveau_risque?: Database["public"]["Enums"]["niveau_risque"] | null
           nom_site?: string
           prestataires_affectes?: Json | null
           responsable_site?: string | null
+          superficie?: number | null
           telephone?: string | null
           updated_at?: string
         }
@@ -1085,14 +1154,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_user_client_id: {
-        Args: { _user_id: string }
-        Returns: string
-      }
-      get_user_site_id: {
-        Args: { _user_id: string }
-        Returns: string
-      }
+      get_user_client_id: { Args: { _user_id: string }; Returns: string }
+      get_user_site_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
