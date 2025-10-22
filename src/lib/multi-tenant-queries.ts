@@ -434,6 +434,40 @@ export const toggleSiteVeilleDomaine = async (
   return data;
 };
 
+// ==================== ADDRESS REFERENCE DATA ====================
+
+export const listGouvernorats = async () => {
+  const { data, error } = await supabase
+    .from("gouvernorats")
+    .select("*")
+    .order("nom");
+  
+  if (error) throw error;
+  return data;
+};
+
+export const listDelegationsByGouvernorat = async (gouvernoratId: string) => {
+  const { data, error } = await supabase
+    .from("delegations")
+    .select("*")
+    .eq("gouvernorat_id", gouvernoratId)
+    .order("nom");
+  
+  if (error) throw error;
+  return data;
+};
+
+export const listLocalitesByDelegation = async (delegationId: string) => {
+  const { data, error } = await supabase
+    .from("localites")
+    .select("*")
+    .eq("delegation_id", delegationId)
+    .order("nom");
+  
+  if (error) throw error;
+  return data;
+};
+
 // ==================== CLIENT USERS MANAGEMENT ====================
 
 export const inviteClientUser = async (

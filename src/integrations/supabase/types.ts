@@ -627,6 +627,38 @@ export type Database = {
           },
         ]
       }
+      delegations: {
+        Row: {
+          code: string
+          created_at: string | null
+          gouvernorat_id: string
+          id: string
+          nom: string
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          gouvernorat_id: string
+          id?: string
+          nom: string
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          gouvernorat_id?: string
+          id?: string
+          nom?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delegations_gouvernorat_id_fkey"
+            columns: ["gouvernorat_id"]
+            isOneToOne: false
+            referencedRelation: "gouvernorats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       domaines_application: {
         Row: {
           actif: boolean | null
@@ -657,6 +689,27 @@ export type Database = {
           id?: string
           libelle?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      gouvernorats: {
+        Row: {
+          code: string
+          created_at: string | null
+          id: string
+          nom: string
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          id?: string
+          nom: string
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          id?: string
+          nom?: string
         }
         Relationships: []
       }
@@ -749,6 +802,38 @@ export type Database = {
             columns: ["site_id"]
             isOneToOne: false
             referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      localites: {
+        Row: {
+          code_postal: string | null
+          created_at: string | null
+          delegation_id: string
+          id: string
+          nom: string
+        }
+        Insert: {
+          code_postal?: string | null
+          created_at?: string | null
+          delegation_id: string
+          id?: string
+          nom: string
+        }
+        Update: {
+          code_postal?: string | null
+          created_at?: string | null
+          delegation_id?: string
+          id?: string
+          nom?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "localites_delegation_id_fkey"
+            columns: ["delegation_id"]
+            isOneToOne: false
+            referencedRelation: "delegations"
             referencedColumns: ["id"]
           },
         ]
@@ -1078,22 +1163,30 @@ export type Database = {
           autorite_protection_civile: string | null
           classification: string | null
           client_id: string
+          code_postal: string | null
           code_site: string
           coordonnees_gps: unknown
+          coordonnees_gps_lat: number | null
+          coordonnees_gps_lng: number | null
           created_at: string
+          delegation: string | null
           documents: Json | null
           effectif: number | null
           email: string | null
           equipements_critiques: Json | null
+          est_siege: boolean | null
           gouvernorat: Database["public"]["Enums"]["gouvernorat"] | null
           id: string
+          localite: string | null
           niveau_risque: Database["public"]["Enums"]["niveau_risque"] | null
           nom_site: string
           prestataires_affectes: Json | null
           responsable_site: string | null
+          secteur_activite: string | null
           superficie: number | null
           telephone: string | null
           updated_at: string
+          ville: string | null
         }
         Insert: {
           activite?: string | null
@@ -1101,22 +1194,30 @@ export type Database = {
           autorite_protection_civile?: string | null
           classification?: string | null
           client_id: string
+          code_postal?: string | null
           code_site: string
           coordonnees_gps?: unknown
+          coordonnees_gps_lat?: number | null
+          coordonnees_gps_lng?: number | null
           created_at?: string
+          delegation?: string | null
           documents?: Json | null
           effectif?: number | null
           email?: string | null
           equipements_critiques?: Json | null
+          est_siege?: boolean | null
           gouvernorat?: Database["public"]["Enums"]["gouvernorat"] | null
           id?: string
+          localite?: string | null
           niveau_risque?: Database["public"]["Enums"]["niveau_risque"] | null
           nom_site: string
           prestataires_affectes?: Json | null
           responsable_site?: string | null
+          secteur_activite?: string | null
           superficie?: number | null
           telephone?: string | null
           updated_at?: string
+          ville?: string | null
         }
         Update: {
           activite?: string | null
@@ -1124,22 +1225,30 @@ export type Database = {
           autorite_protection_civile?: string | null
           classification?: string | null
           client_id?: string
+          code_postal?: string | null
           code_site?: string
           coordonnees_gps?: unknown
+          coordonnees_gps_lat?: number | null
+          coordonnees_gps_lng?: number | null
           created_at?: string
+          delegation?: string | null
           documents?: Json | null
           effectif?: number | null
           email?: string | null
           equipements_critiques?: Json | null
+          est_siege?: boolean | null
           gouvernorat?: Database["public"]["Enums"]["gouvernorat"] | null
           id?: string
+          localite?: string | null
           niveau_risque?: Database["public"]["Enums"]["niveau_risque"] | null
           nom_site?: string
           prestataires_affectes?: Json | null
           responsable_site?: string | null
+          secteur_activite?: string | null
           superficie?: number | null
           telephone?: string | null
           updated_at?: string
+          ville?: string | null
         }
         Relationships: [
           {

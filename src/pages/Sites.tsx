@@ -3,10 +3,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Plus, Search, Factory, Users, Pencil, Trash2, FileText, Building2, Settings } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { MapPin, Plus, Search, Factory, Users, Pencil, Trash2, FileText, Building2, Settings, Filter } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchSites, deleteSite, listSiteModules } from "@/lib/multi-tenant-queries";
+import { fetchSites, deleteSite, fetchClients, listSiteModules, listGouvernorats } from "@/lib/multi-tenant-queries";
 import { SiteFormModal } from "@/components/SiteFormModal";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -14,12 +21,37 @@ import { Database } from "@/integrations/supabase/types";
 
 type SiteRow = Database["public"]["Tables"]["sites"]["Row"];
 
+const CLASSIFICATIONS = [
+  "1ère catégorie",
+  "2ème catégorie", 
+  "3ème catégorie",
+  "ERP",
+  "EOP",
+  "Non classé",
+];
+
+const SECTEURS = [
+  "Chimique",
+  "Pharmaceutique",
+  "Agroalimentaire",
+  "Pétrolière",
+  "Logistique",
+  "Tertiaire",
+  "Énergie",
+  "Autre",
+];
+
 export default function Sites() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
   const [searchQuery, setSearchQuery] = useState("");
+  const [filterClient, setFilterClient] = useState<string>("all");
+  const [filterGouvernorat, setFilterGouvernorat] = useState<string>("all");
+  const [filterSecteur, setFilterSecteur] = useState<string>("all");
+  const [filterClassification, setFilterClassification] = useState<string>("all");
+  const [filterModule, setFilterModule] = useState<string>("all");
   const [siteFormOpen, setSiteFormOpen] = useState(false);
   const [editingSite, setEditingSite] = useState<SiteRow | undefined>();
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -27,6 +59,16 @@ export default function Sites() {
   const { data: sites, isLoading } = useQuery({
     queryKey: ["sites"],
     queryFn: fetchSites,
+  });
+
+  const { data: clients = [] } = useQuery({
+    queryKey: ["clients"],
+    queryFn: fetchClients,
+  });
+
+  const { data: gouvernorats = [] } = useQuery({
+    queryKey: ["gouvernorats"],
+    queryFn: listGouvernorats,
   });
 
   // Component to show active modules for a site
@@ -45,7 +87,7 @@ export default function Sites() {
         {activeModules.slice(0, 3).map((sm: any) => (
           <Badge key={sm.id} variant="secondary" className="text-xs">
             <Settings className="h-3 w-3 mr-1" />
-            {sm.modules_systeme?.libelle}
+            {sm.modules_systeme?.code}
           </Badge>
         ))}
         {activeModules.length > 3 && (
@@ -74,11 +116,23 @@ export default function Sites() {
     },
   });
 
-  const filteredSites = sites?.filter(site =>
-    site.nom_site.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    site.code_site.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (site.gouvernorat && site.gouvernorat.toLowerCase().includes(searchQuery.toLowerCase()))
-  ) || [];
+  const filteredSites = sites?.filter(site => {
+    // Text search
+    const matchesSearch = 
+      site.nom_site.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      site.code_site.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (site.gouvernorat && site.gouvernorat.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (site.delegation && site.delegation.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (site.localite && site.localite.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    // Filters
+    const matchesClient = filterClient === "all" || site.client_id === filterClient;
+    const matchesGouvernorat = filterGouvernorat === "all" || site.gouvernorat === filterGouvernorat;
+    const matchesSecteur = filterSecteur === "all" || site.secteur_activite === filterSecteur;
+    const matchesClassification = filterClassification === "all" || site.classification === filterClassification;
+
+    return matchesSearch && matchesClient && matchesGouvernorat && matchesSecteur && matchesClassification;
+  }) || [];
 
   const handleEdit = (site: SiteRow) => {
     setEditingSite(site);
@@ -143,18 +197,115 @@ export default function Sites() {
         </div>
       </div>
 
-      {/* Search */}
+      {/* Search & Filters */}
       <Card className="shadow-soft">
-        <CardContent className="pt-6">
+        <CardContent className="pt-6 space-y-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Rechercher par nom, code ou gouvernorat..."
+              placeholder="Rechercher par nom, code, gouvernorat, délégation, localité..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
             />
           </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+            <div>
+              <Select value={filterClient} onValueChange={setFilterClient}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Client" />
+                </SelectTrigger>
+                <SelectContent className="bg-background border border-border z-50">
+                  <SelectItem value="all">Tous les clients</SelectItem>
+                  {clients.map((client: any) => (
+                    <SelectItem key={client.id} value={client.id}>
+                      {client.nom_legal}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Select value={filterGouvernorat} onValueChange={setFilterGouvernorat}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Gouvernorat" />
+                </SelectTrigger>
+                <SelectContent className="bg-background border border-border z-50 max-h-60 overflow-y-auto">
+                  <SelectItem value="all">Tous</SelectItem>
+                  {gouvernorats.map((gov: any) => (
+                    <SelectItem key={gov.id} value={gov.nom}>
+                      {gov.nom}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Select value={filterSecteur} onValueChange={setFilterSecteur}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Secteur" />
+                </SelectTrigger>
+                <SelectContent className="bg-background border border-border z-50">
+                  <SelectItem value="all">Tous</SelectItem>
+                  {SECTEURS.map((secteur) => (
+                    <SelectItem key={secteur} value={secteur}>
+                      {secteur}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Select value={filterClassification} onValueChange={setFilterClassification}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Classification" />
+                </SelectTrigger>
+                <SelectContent className="bg-background border border-border z-50">
+                  <SelectItem value="all">Toutes</SelectItem>
+                  {CLASSIFICATIONS.map((classif) => (
+                    <SelectItem key={classif} value={classif}>
+                      {classif}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Select value={filterModule} onValueChange={setFilterModule}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Module" />
+                </SelectTrigger>
+                <SelectContent className="bg-background border border-border z-50">
+                  <SelectItem value="all">Tous</SelectItem>
+                  <SelectItem value="VEILLE">VEILLE</SelectItem>
+                  <SelectItem value="CONFORMITE">CONFORMITE</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {(filterClient !== "all" || filterGouvernorat !== "all" || filterSecteur !== "all" || filterClassification !== "all") && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setFilterClient("all");
+                setFilterGouvernorat("all");
+                setFilterSecteur("all");
+                setFilterClassification("all");
+                setFilterModule("all");
+              }}
+              className="text-xs"
+            >
+              <Filter className="h-3 w-3 mr-1" />
+              Réinitialiser les filtres
+            </Button>
+          )}
         </CardContent>
       </Card>
 
@@ -205,6 +356,11 @@ export default function Sites() {
                       <Badge variant="outline" className="text-xs font-mono">
                         {site.code_site}
                       </Badge>
+                      {site.est_siege && (
+                        <Badge variant="default" className="text-xs">
+                          Siège
+                        </Badge>
+                      )}
                       {site.niveau_risque && (
                         <Badge variant={getRisqueBadgeVariant(site.niveau_risque)} className="text-xs">
                           {site.niveau_risque}
@@ -231,25 +387,37 @@ export default function Sites() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {site.adresse && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                      <span className="text-muted-foreground line-clamp-1">{site.adresse}</span>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    {site.secteur_activite && (
+                      <div className="flex items-center gap-2">
+                        <Factory className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        <span className="text-muted-foreground truncate">{site.secteur_activite}</span>
+                      </div>
+                    )}
+                    {site.effectif !== null && (
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-muted-foreground">{site.effectif} employés</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {(site.gouvernorat || site.delegation || site.localite) && (
+                    <div className="flex items-start gap-2 text-sm">
+                      <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <span className="text-muted-foreground">
+                          {[site.localite, site.delegation, site.gouvernorat]
+                            .filter(Boolean)
+                            .join(", ")}
+                          {site.code_postal && ` · ${site.code_postal}`}
+                        </span>
+                      </div>
                     </div>
                   )}
-                  {site.effectif && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-muted-foreground">{site.effectif} employés</span>
-                    </div>
-                  )}
-                  {site.activite && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Factory className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-muted-foreground line-clamp-1">{site.activite}</span>
-                    </div>
-                  )}
+
                   <SiteModulesBadges siteId={site.id} />
+
                   <div className="flex items-center justify-between pt-3 border-t border-border">
                     {site.responsable_site ? (
                       <span className="text-sm font-medium text-muted-foreground truncate">
@@ -288,9 +456,11 @@ export default function Sites() {
           <CardContent className="py-12 text-center">
             <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground mb-4">
-              {searchQuery ? "Aucun site ne correspond à la recherche" : "Aucun site enregistré"}
+              {searchQuery || filterClient !== "all" || filterGouvernorat !== "all" 
+                ? "Aucun site ne correspond aux critères de recherche" 
+                : "Aucun site enregistré"}
             </p>
-            {!searchQuery && (
+            {!searchQuery && filterClient === "all" && filterGouvernorat === "all" && (
               <Button 
                 onClick={() => {
                   setEditingSite(undefined);
