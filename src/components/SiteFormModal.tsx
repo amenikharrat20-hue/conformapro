@@ -181,18 +181,22 @@ export function SiteFormModal({ open, onOpenChange, site, clientId }: SiteFormMo
 
   // Load equipements from site data and set gouvernorat for delegation loading
   useEffect(() => {
-    if (site?.equipements_critiques) {
+    if (open && site?.equipements_critiques) {
       setEquipements(site.equipements_critiques as Record<string, boolean>);
+    } else if (open && !site) {
+      setEquipements({});
     }
     
     // When editing a site, load its gouvernorat to populate delegations
-    if (site?.gouvernorat && gouvernorats.length > 0) {
+    if (open && site?.gouvernorat && gouvernorats.length > 0) {
       const gov = gouvernorats.find((g: any) => g.nom === site.gouvernorat);
       if (gov) {
         setSelectedGouvernoratId(gov.id);
       }
+    } else if (open && !site) {
+      setSelectedGouvernoratId(null);
     }
-  }, [site, gouvernorats]);
+  }, [open, site, gouvernorats]);
   
   const {
     register,
@@ -204,71 +208,96 @@ export function SiteFormModal({ open, onOpenChange, site, clientId }: SiteFormMo
     control,
   } = useForm<SiteFormData>({
     resolver: zodResolver(siteSchema),
-    defaultValues: site ? {
-      client_id: site.client_id,
-      nom_site: site.nom_site,
-      code_site: site.code_site,
-      classification: site.classification || "",
-      secteur_activite: site.secteur_activite || "",
-      est_siege: site.est_siege || false,
-      adresse: site.adresse || "",
-      gouvernorat: site.gouvernorat || "",
-      delegation: site.delegation || "",
-      localite: site.localite || "",
-      code_postal: site.code_postal || "",
-      ville: site.ville || "",
-      coordonnees_gps_lat: site.coordonnees_gps_lat ? Number(site.coordonnees_gps_lat) : null,
-      coordonnees_gps_lng: site.coordonnees_gps_lng ? Number(site.coordonnees_gps_lng) : null,
-      effectif: site.effectif || 0,
-      superficie: site.superficie ? Number(site.superficie) : null,
-      activite: site.activite || "",
-    } : {
-      client_id: clientId || "",
-      nom_site: "",
-      code_site: "",
-      classification: "",
-      secteur_activite: "",
-      est_siege: false,
-      adresse: "",
-      gouvernorat: "",
-      delegation: "",
-      effectif: 0,
-      superficie: null,
-      activite: "",
-      coordonnees_gps_lat: null,
-      coordonnees_gps_lng: null,
-    },
   });
   
-  // Reset form when modal closes or site changes
+  // Reset form when modal opens/closes
   useEffect(() => {
-    if (!open) {
-      reset();
-      setSelectedGouvernoratId(null);
-      setEquipements({});
+    if (open) {
+      if (site) {
+        reset({
+          client_id: site.client_id,
+          nom_site: site.nom_site,
+          code_site: site.code_site,
+          classification: site.classification || "",
+          secteur_activite: site.secteur_activite || "",
+          est_siege: site.est_siege || false,
+          adresse: site.adresse || "",
+          gouvernorat: site.gouvernorat || "",
+          delegation: site.delegation || "",
+          localite: site.localite || "",
+          code_postal: site.code_postal || "",
+          ville: site.ville || "",
+          coordonnees_gps_lat: site.coordonnees_gps_lat ? Number(site.coordonnees_gps_lat) : null,
+          coordonnees_gps_lng: site.coordonnees_gps_lng ? Number(site.coordonnees_gps_lng) : null,
+          effectif: site.effectif || 0,
+          superficie: site.superficie ? Number(site.superficie) : null,
+          activite: site.activite || "",
+        });
+      } else {
+        reset({
+          client_id: clientId || "",
+          nom_site: "",
+          code_site: "",
+          classification: "",
+          secteur_activite: "",
+          est_siege: false,
+          adresse: "",
+          gouvernorat: "",
+          delegation: "",
+          localite: "",
+          code_postal: "",
+          ville: "",
+          effectif: 0,
+          superficie: null,
+          activite: "",
+          coordonnees_gps_lat: null,
+          coordonnees_gps_lng: null,
+        });
+      }
       setActiveTab("general");
     }
-  }, [open, reset]);
+  }, [open, site, clientId, reset]);
 
   const createMutation = useMutation({
     mutationFn: async (data: SiteFormData) => {
-      const siteData = {
-        ...data,
+      // Remove empty/optional fields to avoid conflicts
+      const cleanData: any = {
+        client_id: data.client_id,
+        nom_site: data.nom_site.trim(),
+        code_site: data.code_site.trim(),
+        classification: data.classification,
+        secteur_activite: data.secteur_activite,
+        est_siege: data.est_siege || false,
+        adresse: data.adresse?.trim() || null,
+        gouvernorat: data.gouvernorat,
+        delegation: data.delegation,
+        effectif: data.effectif || 0,
         equipements_critiques: equipements,
       };
-      return createSite(siteData as any);
+
+      // Add optional fields only if they have values
+      if (data.coordonnees_gps_lat) cleanData.coordonnees_gps_lat = data.coordonnees_gps_lat;
+      if (data.coordonnees_gps_lng) cleanData.coordonnees_gps_lng = data.coordonnees_gps_lng;
+      if (data.superficie) cleanData.superficie = data.superficie;
+      if (data.activite?.trim()) cleanData.activite = data.activite.trim();
+      if (data.code_postal?.trim()) cleanData.code_postal = data.code_postal.trim();
+
+      return createSite(cleanData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sites"] });
       queryClient.invalidateQueries({ queryKey: ["clients"] });
       toast({ title: "Site créé avec succès" });
       reset();
+      setEquipements({});
+      setSelectedGouvernoratId(null);
       onOpenChange(false);
     },
     onError: (error: any) => {
+      console.error("Site creation error:", error);
       toast({
         title: "Erreur lors de la création",
-        description: error.message,
+        description: error.message || "Une erreur est survenue",
         variant: "destructive",
       });
     },
@@ -276,11 +305,28 @@ export function SiteFormModal({ open, onOpenChange, site, clientId }: SiteFormMo
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: SiteFormData }) => {
-      const siteData = {
-        ...data,
+      // Remove empty/optional fields
+      const cleanData: any = {
+        nom_site: data.nom_site.trim(),
+        code_site: data.code_site.trim(),
+        classification: data.classification,
+        secteur_activite: data.secteur_activite,
+        est_siege: data.est_siege || false,
+        adresse: data.adresse?.trim() || null,
+        gouvernorat: data.gouvernorat,
+        delegation: data.delegation,
+        effectif: data.effectif || 0,
         equipements_critiques: equipements,
       };
-      return updateSite(id, siteData as any);
+
+      // Add optional fields only if they have values
+      if (data.coordonnees_gps_lat) cleanData.coordonnees_gps_lat = data.coordonnees_gps_lat;
+      if (data.coordonnees_gps_lng) cleanData.coordonnees_gps_lng = data.coordonnees_gps_lng;
+      if (data.superficie) cleanData.superficie = data.superficie;
+      if (data.activite?.trim()) cleanData.activite = data.activite.trim();
+      if (data.code_postal?.trim()) cleanData.code_postal = data.code_postal.trim();
+
+      return updateSite(id, cleanData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sites"] });
@@ -289,9 +335,10 @@ export function SiteFormModal({ open, onOpenChange, site, clientId }: SiteFormMo
       onOpenChange(false);
     },
     onError: (error: any) => {
+      console.error("Site update error:", error);
       toast({
         title: "Erreur lors de la modification",
-        description: error.message,
+        description: error.message || "Une erreur est survenue",
         variant: "destructive",
       });
     },
