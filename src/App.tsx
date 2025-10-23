@@ -21,6 +21,7 @@ import BibliothequeNavigationTree from "./pages/BibliothequeNavigationTree";
 import BibliothequeTexteDetail from "./pages/BibliothequeTexteDetail";
 import BibliothequeTexteArticles from "./pages/BibliothequeTexteArticles";
 import BibliothequeArticleVersions from "./pages/BibliothequeArticleVersions";
+import BibliothequeTableauDeBord from "./pages/BibliothequeTableauDeBord";
 import ArticleVersions from "./pages/ArticleVersions";
 import ConformiteEvaluation from "./pages/ConformiteEvaluation";
 import PlanAction from "./pages/PlanAction";
@@ -93,6 +94,7 @@ const App = () => (
                           <Route path="/textes/:id" element={<TexteDetail />} />
                           <Route path="/textes/:id/editer" element={<TexteForm />} />
                           <Route path="/bibliotheque" element={<BibliothequeNavigationTree />} />
+                          <Route path="/bibliotheque/tableau-de-bord" element={<BibliothequeTableauDeBord />} />
                           <Route path="/bibliotheque/textes/:id" element={<BibliothequeTexteDetail />} />
                           <Route path="/bibliotheque/textes/:id/articles" element={<BibliothequeTexteArticles />} />
                           <Route path="/bibliotheque/articles/:articleId/versions" element={<BibliothequeArticleVersions />} />
