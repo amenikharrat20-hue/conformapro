@@ -22,6 +22,7 @@ import BibliothequeTexteDetail from "./pages/BibliothequeTexteDetail";
 import BibliothequeTexteArticles from "./pages/BibliothequeTexteArticles";
 import BibliothequeArticleVersions from "./pages/BibliothequeArticleVersions";
 import BibliothequeTableauDeBord from "./pages/BibliothequeTableauDeBord";
+import BibliothequeRechercheIntelligente from "./pages/BibliothequeRechercheIntelligente";
 import ArticleVersions from "./pages/ArticleVersions";
 import ConformiteEvaluation from "./pages/ConformiteEvaluation";
 import PlanAction from "./pages/PlanAction";
@@ -104,6 +105,8 @@ const App = () => (
                           <Route path="/veille/bibliotheque/textes/:id" element={<BibliothequeTexteDetail />} />
                           <Route path="/veille/bibliotheque/textes/:id/articles" element={<BibliothequeTexteArticles />} />
                           <Route path="/veille/bibliotheque/articles/:articleId/versions" element={<BibliothequeArticleVersions />} />
+                          <Route path="/veille/bibliotheque/tableau-de-bord" element={<BibliothequeTableauDeBord />} />
+                          <Route path="/veille/bibliotheque/recherche" element={<BibliothequeRechercheIntelligente />} />
                           <Route path="/veille/conformite" element={<ConformiteEvaluation />} />
                           <Route path="/veille/actions" element={<PlanAction />} />
                           <Route path="/veille/domaines" element={<DomainesPage />} />

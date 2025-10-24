@@ -58,6 +58,107 @@ export const sousDomainesQueries = {
 };
 
 export const textesReglementairesQueries = {
+  async smartSearch(filters?: {
+    searchTerm?: string;
+    typeFilter?: string;
+    statutFilter?: string;
+    domaineFilter?: string;
+    anneeFilter?: string;
+    page?: number;
+    pageSize?: number;
+  }) {
+    const page = filters?.page || 1;
+    const pageSize = filters?.pageSize || 10;
+    const searchTerm = filters?.searchTerm?.trim() || "";
+
+    // Search in textes
+    let textesQuery = supabase
+      .from("textes_reglementaires")
+      .select(`
+        *,
+        domaines:textes_reglementaires_domaines(
+          domaine:domaines_application(id, libelle)
+        )
+      `)
+      .is("deleted_at", null);
+
+    if (searchTerm) {
+      textesQuery = textesQuery.or(
+        `titre.ilike.%${searchTerm}%,reference_officielle.ilike.%${searchTerm}%,resume.ilike.%${searchTerm}%,autorite.ilike.%${searchTerm}%`
+      );
+    }
+
+    if (filters?.typeFilter && filters.typeFilter !== "all") {
+      textesQuery = textesQuery.eq("type", filters.typeFilter as any);
+    }
+
+    if (filters?.statutFilter && filters.statutFilter !== "all") {
+      textesQuery = textesQuery.eq("statut_vigueur", filters.statutFilter as any);
+    }
+
+    if (filters?.anneeFilter && filters.anneeFilter !== "all") {
+      textesQuery = textesQuery.eq("annee", parseInt(filters.anneeFilter));
+    }
+
+    // Search in articles
+    let articlesQuery = supabase
+      .from("textes_articles")
+      .select(`
+        *,
+        texte:textes_reglementaires!inner(
+          id, titre, reference_officielle, type, statut_vigueur, date_publication, annee,
+          domaines:textes_reglementaires_domaines(
+            domaine:domaines_application(id, libelle)
+          )
+        )
+      `)
+      .is("texte.deleted_at", null);
+
+    if (searchTerm) {
+      articlesQuery = articlesQuery.or(
+        `numero.ilike.%${searchTerm}%,titre_court.ilike.%${searchTerm}%,contenu.ilike.%${searchTerm}%,reference.ilike.%${searchTerm}%`
+      );
+    }
+
+    if (filters?.typeFilter && filters.typeFilter !== "all") {
+      articlesQuery = articlesQuery.eq("texte.type", filters.typeFilter as any);
+    }
+
+    if (filters?.statutFilter && filters.statutFilter !== "all") {
+      articlesQuery = articlesQuery.eq("texte.statut_vigueur", filters.statutFilter as any);
+    }
+
+    if (filters?.anneeFilter && filters.anneeFilter !== "all") {
+      articlesQuery = articlesQuery.eq("texte.annee", parseInt(filters.anneeFilter));
+    }
+
+    const [textesResult, articlesResult] = await Promise.all([
+      textesQuery,
+      articlesQuery.limit(50)
+    ]);
+
+    if (textesResult.error) throw textesResult.error;
+    if (articlesResult.error) throw articlesResult.error;
+
+    const results = [
+      ...(textesResult.data || []).map((t: any) => ({
+        type: 'texte' as const,
+        id: t.id,
+        data: t
+      })),
+      ...(articlesResult.data || []).map((a: any) => ({
+        type: 'article' as const,
+        id: a.id,
+        data: a
+      }))
+    ];
+
+    return {
+      results,
+      totalCount: results.length
+    };
+  },
+
   async getAll(filters?: {
     searchTerm?: string;
     typeFilter?: string;
