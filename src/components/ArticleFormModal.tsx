@@ -95,6 +95,11 @@ export function ArticleFormModal({
       return;
     }
 
+    if (!formData.contenu.trim() && !article) {
+      toast.error("Le contenu de l'article est requis");
+      return;
+    }
+
     const cleanData = {
       texte_id: texteId,
       numero: formData.numero.trim(),

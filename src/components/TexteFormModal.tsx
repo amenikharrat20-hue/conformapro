@@ -66,7 +66,23 @@ export function TexteFormModal({ open, onOpenChange, texte, onSuccess }: TexteFo
         fichier_pdf_url: texte.fichier_pdf_url || "",
         annee: texte.annee || new Date().getFullYear(),
       });
-      // TODO: Load existing domaines/sous-domaines for edit mode
+      
+      // Load existing domaines
+      const texteWithRelations = texte as any;
+      if (texteWithRelations.domaines) {
+        const domaineIds = texteWithRelations.domaines
+          .map((d: any) => d.domaine?.id)
+          .filter(Boolean);
+        setSelectedDomaines(domaineIds);
+      }
+      
+      // Load existing sous-domaines
+      if (texteWithRelations.sous_domaines) {
+        const sousDomaineIds = texteWithRelations.sous_domaines
+          .map((sd: any) => sd.sous_domaine?.id)
+          .filter(Boolean);
+        setSelectedSousDomaines(sousDomaineIds);
+      }
     } else {
       setFormData({
         type: "LOI_ORDINAIRE",
@@ -115,6 +131,17 @@ export function TexteFormModal({ open, onOpenChange, texte, onSuccess }: TexteFo
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Client-side validation
+    if (!formData.reference_officielle.trim()) {
+      toast.error("La référence officielle est requise");
+      return;
+    }
+    if (!formData.titre.trim()) {
+      toast.error("Le titre est requis");
+      return;
+    }
+    
     if (texte) {
       updateMutation.mutate({ id: texte.id, data: formData });
     } else {
@@ -225,7 +252,11 @@ export function TexteFormModal({ open, onOpenChange, texte, onSuccess }: TexteFo
                 type="date"
                 value={formData.date_publication}
                 onChange={(e) => setFormData({ ...formData, date_publication: e.target.value })}
+                placeholder={new Date().toISOString().split('T')[0]}
               />
+              <p className="text-xs text-muted-foreground">
+                Laisser vide pour utiliser la date du jour
+              </p>
             </div>
           </div>
 

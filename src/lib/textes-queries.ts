@@ -44,14 +44,19 @@ export const domainesQueries = {
 };
 
 export const sousDomainesQueries = {
-  async getActive(domaineId: string) {
-    const { data, error } = await supabase
+  async getActive(domaineId?: string) {
+    let query = supabase
       .from("sous_domaines_application")
       .select("*")
-      .eq("domaine_id", domaineId)
       .eq("actif", true)
       .is("deleted_at", null)
       .order("ordre");
+    
+    if (domaineId) {
+      query = query.eq("domaine_id", domaineId);
+    }
+    
+    const { data, error } = await query;
     if (error) throw error;
     return data || [];
   },

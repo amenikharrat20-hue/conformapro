@@ -19,20 +19,18 @@ import {
   ChevronRight
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { actesQueries, domainesQueries, sousDomainesQueries } from "@/lib/actes-queries";
+import { textesReglementairesQueries, domainesQueries, sousDomainesQueries } from "@/lib/textes-queries";
+import { TexteFormModal } from "@/components/TexteFormModal";
 
 const TYPE_LABELS: Record<string, string> = {
-  loi: "Loi",
-  loi_org: "Loi organique",
-  code: "Code",
-  decret_gouv: "Décret gouvernemental",
-  decret_pres: "Décret présidentiel",
-  decret_loi: "Décret-loi",
-  arrete: "Arrêté",
-  arrete_conjoint: "Arrêté conjoint",
-  circulaire: "Circulaire",
-  decision: "Décision",
-  rectificatif: "Rectificatif"
+  LOI_ORDINAIRE: "Loi ordinaire",
+  LOI_ORGANIQUE: "Loi organique",
+  DECRET_LOI: "Décret-loi",
+  DECRET_PRESIDENTIEL: "Décret présidentiel",
+  DECRET_GOUVERNEMENTAL: "Décret gouvernemental",
+  ARRETE_MINISTERIEL: "Arrêté ministériel",
+  ARRETE_INTERMINISTERIEL: "Arrêté interministériel",
+  CIRCULAIRE: "Circulaire"
 };
 
 export default function BibliothequeTextes() {
@@ -43,10 +41,11 @@ export default function BibliothequeTextes() {
   const [sousDomaineFilter, setSousDomaineFilter] = useState<string>("all");
   const [statutFilter, setStatutFilter] = useState<string>("all");
   const [anneeFilter, setAnneeFilter] = useState<string>("all");
-  const [autoriteFilter, setAutoriteFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
-  const [sortBy, setSortBy] = useState("date_publication_jort");
+  const [sortBy, setSortBy] = useState("date_publication");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [showTexteModal, setShowTexteModal] = useState(false);
+  const [editingTexte, setEditingTexte] = useState<any>(null);
   const pageSize = 25;
 
   const { data: domainesList } = useQuery({
@@ -56,21 +55,20 @@ export default function BibliothequeTextes() {
 
   const { data: sousDomainesList } = useQuery({
     queryKey: ["sous-domaines", domaineFilter],
-    queryFn: () => domaineFilter !== "all" ? sousDomainesQueries.getActive(domaineFilter) : Promise.resolve([]),
+    queryFn: () => domaineFilter !== "all" ? sousDomainesQueries.getActive(domaineFilter) : sousDomainesQueries.getActive(),
     enabled: domaineFilter !== "all",
   });
 
   const { data: result, isLoading } = useQuery({
-    queryKey: ["bibliotheque-textes", searchTerm, typeFilter, domaineFilter, sousDomaineFilter, statutFilter, anneeFilter, autoriteFilter, page, sortBy, sortOrder],
+    queryKey: ["textes-reglementaires", searchTerm, typeFilter, domaineFilter, sousDomaineFilter, statutFilter, anneeFilter, page, sortBy, sortOrder],
     queryFn: () =>
-      actesQueries.getAll({
+      textesReglementairesQueries.getAll({
         searchTerm,
         typeFilter: typeFilter !== "all" ? typeFilter : undefined,
         statutFilter: statutFilter !== "all" ? statutFilter : undefined,
         domaineFilter: domaineFilter !== "all" ? domaineFilter : undefined,
         sousDomaineFilter: sousDomaineFilter !== "all" ? sousDomaineFilter : undefined,
         anneeFilter: anneeFilter !== "all" ? anneeFilter : undefined,
-        autoriteFilter: autoriteFilter !== "all" ? autoriteFilter : undefined,
         page,
         pageSize,
         sortBy,
@@ -86,19 +84,10 @@ export default function BibliothequeTextes() {
   const uniqueYears = Array.from(
     new Set(
       textes
-        .map((t) => t.date_publication_jort ? new Date(t.date_publication_jort).getFullYear() : null)
-        .filter((y): y is number => y !== null)
+        .map((t: any) => t.annee)
+        .filter((y): y is number => y !== null && y !== undefined)
     )
   ).sort((a, b) => b - a);
-
-  // Get unique authorities for filter
-  const uniqueAutorites = Array.from(
-    new Set(
-      textes
-        .map((t) => t.autorite_emettrice)
-        .filter((a): a is string => !!a)
-    )
-  ).sort();
 
   const getStatutBadge = (statut: string) => {
     switch (statut) {
@@ -146,7 +135,10 @@ export default function BibliothequeTextes() {
             <Download className="h-4 w-4 mr-2" />
             Exporter
           </Button>
-          <Button size="sm">
+          <Button size="sm" onClick={() => {
+            setEditingTexte(null);
+            setShowTexteModal(true);
+          }}>
             <Plus className="h-4 w-4 mr-2" />
             Créer un texte
           </Button>
@@ -206,7 +198,7 @@ export default function BibliothequeTextes() {
               <Select 
                 value={sousDomaineFilter} 
                 onValueChange={(val) => { setSousDomaineFilter(val); setPage(1); }}
-                disabled={domaineFilter === "all"}
+                disabled={!sousDomainesList || sousDomainesList.length === 0}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Sous-domaine" />
@@ -247,20 +239,6 @@ export default function BibliothequeTextes() {
                   ))}
                 </SelectContent>
               </Select>
-
-              <Select value={autoriteFilter} onValueChange={(val) => { setAutoriteFilter(val); setPage(1); }}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Autorité" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Toutes les autorités</SelectItem>
-                  {uniqueAutorites.map((autorite) => (
-                    <SelectItem key={autorite} value={autorite}>
-                      {autorite}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
           </div>
         </CardContent>
@@ -287,20 +265,20 @@ export default function BibliothequeTextes() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="cursor-pointer" onClick={() => handleSort("type_acte")}>
-                        Type {sortBy === "type_acte" && (sortOrder === "asc" ? "↑" : "↓")}
+                      <TableHead className="cursor-pointer" onClick={() => handleSort("type")}>
+                        Type {sortBy === "type" && (sortOrder === "asc" ? "↑" : "↓")}
                       </TableHead>
                       <TableHead className="cursor-pointer" onClick={() => handleSort("reference_officielle")}>
                         Référence {sortBy === "reference_officielle" && (sortOrder === "asc" ? "↑" : "↓")}
                       </TableHead>
-                      <TableHead className="cursor-pointer" onClick={() => handleSort("intitule")}>
-                        Titre {sortBy === "intitule" && (sortOrder === "asc" ? "↑" : "↓")}
+                      <TableHead className="cursor-pointer" onClick={() => handleSort("titre")}>
+                        Titre {sortBy === "titre" && (sortOrder === "asc" ? "↑" : "↓")}
                       </TableHead>
-                      <TableHead className="cursor-pointer" onClick={() => handleSort("autorite_emettrice")}>
-                        Autorité {sortBy === "autorite_emettrice" && (sortOrder === "asc" ? "↑" : "↓")}
+                      <TableHead className="cursor-pointer" onClick={() => handleSort("autorite")}>
+                        Autorité {sortBy === "autorite" && (sortOrder === "asc" ? "↑" : "↓")}
                       </TableHead>
-                      <TableHead className="cursor-pointer" onClick={() => handleSort("date_publication_jort")}>
-                        Date publication {sortBy === "date_publication_jort" && (sortOrder === "asc" ? "↑" : "↓")}
+                      <TableHead className="cursor-pointer" onClick={() => handleSort("date_publication")}>
+                        Date publication {sortBy === "date_publication" && (sortOrder === "asc" ? "↑" : "↓")}
                       </TableHead>
                       <TableHead>Statut</TableHead>
                       <TableHead className="text-center">#Articles</TableHead>
@@ -321,16 +299,16 @@ export default function BibliothequeTextes() {
                         >
                           <TableCell>
                             <Badge variant="outline" className="text-xs">
-                              {TYPE_LABELS[texte.type_acte] || texte.type_acte}
+                              {TYPE_LABELS[texte.type] || texte.type}
                             </Badge>
                           </TableCell>
                           <TableCell className="font-medium">
-                            {texte.reference_officielle || texte.numero_officiel || "—"}
+                            {texte.reference_officielle || "—"}
                           </TableCell>
                           <TableCell>
                             <div className="max-w-md">
                               <div className="font-medium text-foreground line-clamp-1">
-                                {texte.intitule}
+                                {texte.titre}
                               </div>
                               {texte.resume && (
                                 <div className="text-xs text-muted-foreground mt-1 line-clamp-1">
@@ -340,11 +318,11 @@ export default function BibliothequeTextes() {
                             </div>
                           </TableCell>
                           <TableCell className="text-sm">
-                            {texte.autorite_emettrice || "—"}
+                            {texte.autorite || "—"}
                           </TableCell>
                           <TableCell className="text-sm text-muted-foreground">
-                            {texte.date_publication_jort
-                              ? new Date(texte.date_publication_jort).toLocaleDateString("fr-TN")
+                            {texte.date_publication
+                              ? new Date(texte.date_publication).toLocaleDateString("fr-TN")
                               : "—"}
                           </TableCell>
                           <TableCell>
@@ -367,9 +345,9 @@ export default function BibliothequeTextes() {
                           </TableCell>
                           <TableCell>
                             <div className="flex flex-wrap gap-1 max-w-xs">
-                              {texte.domaines?.slice(0, 2).map((domaine: string, idx: number) => (
+                              {texte.domaines?.slice(0, 2).map((d: any, idx: number) => (
                                 <Badge key={idx} variant="outline" className="text-xs">
-                                  {domaine}
+                                  {d.domaine?.libelle}
                                 </Badge>
                               ))}
                               {texte.domaines && texte.domaines.length > 2 && (
@@ -413,7 +391,7 @@ export default function BibliothequeTextes() {
                       <div className="space-y-3">
                         <div className="flex items-start justify-between gap-2">
                           <Badge variant="outline" className="text-xs">
-                            {TYPE_LABELS[texte.type_acte] || texte.type_acte}
+                            {TYPE_LABELS[texte.type] || texte.type}
                           </Badge>
                           <Badge
                             className={
@@ -432,7 +410,7 @@ export default function BibliothequeTextes() {
                         
                         <div>
                           <div className="font-semibold text-foreground mb-1">
-                            {texte.reference_officielle || texte.numero_officiel} - {texte.intitule}
+                            {texte.reference_officielle} - {texte.titre}
                           </div>
                           {texte.resume && (
                             <div className="text-sm text-muted-foreground line-clamp-2">
@@ -441,16 +419,16 @@ export default function BibliothequeTextes() {
                           )}
                         </div>
 
-                        {texte.autorite_emettrice && (
+                        {texte.autorite && (
                           <div className="text-xs text-muted-foreground">
-                            Autorité: {texte.autorite_emettrice}
+                            Autorité: {texte.autorite}
                           </div>
                         )}
 
                         <div className="flex flex-wrap gap-2">
-                          {texte.domaines?.slice(0, 2).map((domaine: string, idx: number) => (
+                          {texte.domaines?.slice(0, 2).map((d: any, idx: number) => (
                             <Badge key={idx} variant="outline" className="text-xs">
-                              {domaine}
+                              {d.domaine?.libelle}
                             </Badge>
                           ))}
                           <Badge variant="secondary" className="text-xs">
@@ -458,10 +436,10 @@ export default function BibliothequeTextes() {
                           </Badge>
                         </div>
 
-                        {texte.date_publication_jort && (
+                        {texte.date_publication && (
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             <Calendar className="h-3 w-3" />
-                            {new Date(texte.date_publication_jort).toLocaleDateString("fr-TN")}
+                            {new Date(texte.date_publication).toLocaleDateString("fr-TN")}
                           </div>
                         )}
                       </div>
@@ -504,7 +482,10 @@ export default function BibliothequeTextes() {
               <p className="text-muted-foreground mb-4">
                 Commencez par créer votre premier texte réglementaire
               </p>
-              <Button>
+              <Button onClick={() => {
+                setEditingTexte(null);
+                setShowTexteModal(true);
+              }}>
                 <Plus className="h-4 w-4 mr-2" />
                 Créer un texte
               </Button>
@@ -512,6 +493,16 @@ export default function BibliothequeTextes() {
           )}
         </CardContent>
       </Card>
+
+      <TexteFormModal 
+        open={showTexteModal}
+        onOpenChange={setShowTexteModal}
+        texte={editingTexte}
+        onSuccess={() => {
+          setEditingTexte(null);
+          setShowTexteModal(false);
+        }}
+      />
     </div>
   );
 }
