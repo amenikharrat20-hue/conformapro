@@ -26,20 +26,16 @@ import { textesReglementairesQueries, domainesQueries, sousDomainesQueries } fro
 import { TexteReglementaireFormModal } from "@/components/TexteReglementaireFormModal";
 
 const TYPE_LABELS: Record<string, string> = {
-  LOI_ORDINAIRE: "Loi ordinaire",
-  LOI_ORGANIQUE: "Loi organique",
-  DECRET_LOI: "Décret-loi",
-  DECRET_PRESIDENTIEL: "Décret présidentiel",
-  DECRET_GOUVERNEMENTAL: "Décret gouvernemental",
-  ARRETE_MINISTERIEL: "Arrêté ministériel",
-  ARRETE_INTERMINISTERIEL: "Arrêté interministériel",
+  LOI: "Loi",
+  ARRETE: "Arrêté",
+  DECRET: "Décret",
   CIRCULAIRE: "Circulaire"
 };
 
 const TYPE_GROUPS: Record<string, string[]> = {
-  "LOIS": ["LOI_ORDINAIRE", "LOI_ORGANIQUE"],
-  "DÉCRETS": ["DECRET_LOI", "DECRET_PRESIDENTIEL", "DECRET_GOUVERNEMENTAL"],
-  "ARRÊTÉS": ["ARRETE_MINISTERIEL", "ARRETE_INTERMINISTERIEL"],
+  "LOIS": ["LOI"],
+  "DÉCRETS": ["DECRET"],
+  "ARRÊTÉS": ["ARRETE"],
   "CIRCULAIRES": ["CIRCULAIRE"]
 };
 

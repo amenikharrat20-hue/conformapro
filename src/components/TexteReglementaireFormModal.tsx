@@ -27,8 +27,17 @@ export function TexteReglementaireFormModal({
   onSuccess 
 }: TexteReglementaireFormModalProps) {
   const queryClient = useQueryClient();
+  
+  // Helper function to normalize old enum values to new simple values
+  const normalizeType = (type: string): "LOI" | "ARRETE" | "DECRET" | "CIRCULAIRE" => {
+    if (type.startsWith("LOI") || type === "DECRET_LOI") return "LOI";
+    if (type.startsWith("ARRETE")) return "ARRETE";
+    if (type.startsWith("DECRET")) return "DECRET";
+    return "CIRCULAIRE";
+  };
+  
   const [formData, setFormData] = useState({
-    type: "LOI_ORDINAIRE" as any,
+    type: "LOI" as any,
     reference_officielle: "",
     titre: "",
     autorite: "",
@@ -52,7 +61,7 @@ export function TexteReglementaireFormModal({
   useEffect(() => {
     if (texte) {
       setFormData({
-        type: texte.type,
+        type: normalizeType(texte.type),
         reference_officielle: texte.reference_officielle,
         titre: texte.titre,
         autorite: texte.autorite || "",
@@ -78,7 +87,7 @@ export function TexteReglementaireFormModal({
 
   const resetForm = () => {
     setFormData({
-      type: "LOI_ORDINAIRE",
+      type: "LOI",
       reference_officielle: "",
       titre: "",
       autorite: "",
@@ -255,13 +264,9 @@ export function TexteReglementaireFormModal({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="LOI_ORDINAIRE">Loi ordinaire</SelectItem>
-                <SelectItem value="LOI_ORGANIQUE">Loi organique</SelectItem>
-                <SelectItem value="DECRET_LOI">Décret-loi</SelectItem>
-                <SelectItem value="DECRET_PRESIDENTIEL">Décret présidentiel</SelectItem>
-                <SelectItem value="DECRET_GOUVERNEMENTAL">Décret gouvernemental</SelectItem>
-                <SelectItem value="ARRETE_MINISTERIEL">Arrêté ministériel</SelectItem>
-                <SelectItem value="ARRETE_INTERMINISTERIEL">Arrêté interministériel</SelectItem>
+                <SelectItem value="LOI">Loi</SelectItem>
+                <SelectItem value="ARRETE">Arrêté</SelectItem>
+                <SelectItem value="DECRET">Décret</SelectItem>
                 <SelectItem value="CIRCULAIRE">Circulaire</SelectItem>
               </SelectContent>
             </Select>

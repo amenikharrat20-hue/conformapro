@@ -16,13 +16,9 @@ import { useQuery } from "@tanstack/react-query";
 import { textesReglementairesQueries, domainesQueries } from "@/lib/textes-queries";
 
 const TYPE_LABELS: Record<string, string> = {
-  LOI_ORDINAIRE: "Loi ordinaire",
-  LOI_ORGANIQUE: "Loi organique",
-  DECRET_LOI: "Décret-loi",
-  DECRET_PRESIDENTIEL: "Décret présidentiel",
-  DECRET_GOUVERNEMENTAL: "Décret gouvernemental",
-  ARRETE_MINISTERIEL: "Arrêté ministériel",
-  ARRETE_INTERMINISTERIEL: "Arrêté interministériel",
+  LOI: "Loi",
+  ARRETE: "Arrêté",
+  DECRET: "Décret",
   CIRCULAIRE: "Circulaire"
 };
 

@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export interface TexteReglementaire {
   id: string;
-  type: 'LOI_ORDINAIRE' | 'LOI_ORGANIQUE' | 'DECRET_LOI' | 'DECRET_PRESIDENTIEL' | 'DECRET_GOUVERNEMENTAL' | 'ARRETE_MINISTERIEL' | 'ARRETE_INTERMINISTERIEL' | 'CIRCULAIRE';
+  type: 'LOI' | 'ARRETE' | 'DECRET' | 'CIRCULAIRE';
   code_id?: string;
   reference_officielle: string;
   titre: string;
