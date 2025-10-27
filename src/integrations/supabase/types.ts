@@ -692,6 +692,138 @@ export type Database = {
         }
         Relationships: []
       }
+      equipements_controle: {
+        Row: {
+          batiment: string | null
+          code_identification: string
+          created_at: string
+          created_by: string | null
+          date_dernier_controle: string | null
+          date_mise_en_service: string | null
+          etage: string | null
+          id: string
+          localisation: string | null
+          marque: string | null
+          modele: string | null
+          numero_serie: string | null
+          observations: string | null
+          organisme_controle_id: string | null
+          periodicite_mois: number
+          prochaine_echeance: string | null
+          responsable_hse_id: string | null
+          resultat_dernier_controle:
+            | Database["public"]["Enums"]["resultat_controle"]
+            | null
+          site_id: string
+          statut_conformite:
+            | Database["public"]["Enums"]["statut_conformite"]
+            | null
+          statut_operationnel:
+            | Database["public"]["Enums"]["statut_operationnel"]
+            | null
+          type_equipement_id: string
+          updated_at: string
+        }
+        Insert: {
+          batiment?: string | null
+          code_identification: string
+          created_at?: string
+          created_by?: string | null
+          date_dernier_controle?: string | null
+          date_mise_en_service?: string | null
+          etage?: string | null
+          id?: string
+          localisation?: string | null
+          marque?: string | null
+          modele?: string | null
+          numero_serie?: string | null
+          observations?: string | null
+          organisme_controle_id?: string | null
+          periodicite_mois?: number
+          prochaine_echeance?: string | null
+          responsable_hse_id?: string | null
+          resultat_dernier_controle?:
+            | Database["public"]["Enums"]["resultat_controle"]
+            | null
+          site_id: string
+          statut_conformite?:
+            | Database["public"]["Enums"]["statut_conformite"]
+            | null
+          statut_operationnel?:
+            | Database["public"]["Enums"]["statut_operationnel"]
+            | null
+          type_equipement_id: string
+          updated_at?: string
+        }
+        Update: {
+          batiment?: string | null
+          code_identification?: string
+          created_at?: string
+          created_by?: string | null
+          date_dernier_controle?: string | null
+          date_mise_en_service?: string | null
+          etage?: string | null
+          id?: string
+          localisation?: string | null
+          marque?: string | null
+          modele?: string | null
+          numero_serie?: string | null
+          observations?: string | null
+          organisme_controle_id?: string | null
+          periodicite_mois?: number
+          prochaine_echeance?: string | null
+          responsable_hse_id?: string | null
+          resultat_dernier_controle?:
+            | Database["public"]["Enums"]["resultat_controle"]
+            | null
+          site_id?: string
+          statut_conformite?:
+            | Database["public"]["Enums"]["statut_conformite"]
+            | null
+          statut_operationnel?:
+            | Database["public"]["Enums"]["statut_operationnel"]
+            | null
+          type_equipement_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipements_controle_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "equipements_controle_organisme_controle_id_fkey"
+            columns: ["organisme_controle_id"]
+            isOneToOne: false
+            referencedRelation: "organismes_controle"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "equipements_controle_responsable_hse_id_fkey"
+            columns: ["responsable_hse_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "equipements_controle_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "equipements_controle_type_equipement_id_fkey"
+            columns: ["type_equipement_id"]
+            isOneToOne: false
+            referencedRelation: "types_equipement"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gouvernorats: {
         Row: {
           code: string
@@ -712,6 +844,79 @@ export type Database = {
           nom?: string
         }
         Relationships: []
+      }
+      historique_controles: {
+        Row: {
+          actions_correctives: string | null
+          certificat_numero: string | null
+          controleur_nom: string | null
+          created_at: string
+          created_by: string | null
+          date_controle: string
+          equipement_id: string
+          id: string
+          non_conformites: string[] | null
+          observations: string | null
+          organisme_controle_id: string | null
+          prochaine_echeance: string | null
+          rapport_url: string | null
+          resultat: Database["public"]["Enums"]["resultat_controle"]
+        }
+        Insert: {
+          actions_correctives?: string | null
+          certificat_numero?: string | null
+          controleur_nom?: string | null
+          created_at?: string
+          created_by?: string | null
+          date_controle: string
+          equipement_id: string
+          id?: string
+          non_conformites?: string[] | null
+          observations?: string | null
+          organisme_controle_id?: string | null
+          prochaine_echeance?: string | null
+          rapport_url?: string | null
+          resultat: Database["public"]["Enums"]["resultat_controle"]
+        }
+        Update: {
+          actions_correctives?: string | null
+          certificat_numero?: string | null
+          controleur_nom?: string | null
+          created_at?: string
+          created_by?: string | null
+          date_controle?: string
+          equipement_id?: string
+          id?: string
+          non_conformites?: string[] | null
+          observations?: string | null
+          organisme_controle_id?: string | null
+          prochaine_echeance?: string | null
+          rapport_url?: string | null
+          resultat?: Database["public"]["Enums"]["resultat_controle"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "historique_controles_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "historique_controles_equipement_id_fkey"
+            columns: ["equipement_id"]
+            isOneToOne: false
+            referencedRelation: "equipements_controle"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "historique_controles_organisme_controle_id_fkey"
+            columns: ["organisme_controle_id"]
+            isOneToOne: false
+            referencedRelation: "organismes_controle"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       lectures_validations: {
         Row: {
@@ -865,6 +1070,45 @@ export type Database = {
           id?: string
           libelle?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      organismes_controle: {
+        Row: {
+          actif: boolean | null
+          adresse: string | null
+          agrement_numero: string | null
+          created_at: string
+          email: string | null
+          id: string
+          nom: string
+          specialites: string[] | null
+          telephone: string | null
+          updated_at: string
+        }
+        Insert: {
+          actif?: boolean | null
+          adresse?: string | null
+          agrement_numero?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          nom: string
+          specialites?: string[] | null
+          telephone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          actif?: boolean | null
+          adresse?: string | null
+          agrement_numero?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          nom?: string
+          specialites?: string[] | null
+          telephone?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1671,6 +1915,42 @@ export type Database = {
         }
         Relationships: []
       }
+      types_equipement: {
+        Row: {
+          actif: boolean | null
+          code: string
+          created_at: string
+          description: string | null
+          id: string
+          libelle: string
+          periodicite_mois: number
+          reglementation_reference: string | null
+          updated_at: string
+        }
+        Insert: {
+          actif?: boolean | null
+          code: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          libelle: string
+          periodicite_mois?: number
+          reglementation_reference?: string | null
+          updated_at?: string
+        }
+        Update: {
+          actif?: boolean | null
+          code?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          libelle?: string
+          periodicite_mois?: number
+          reglementation_reference?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -1786,8 +2066,15 @@ export type Database = {
       niveau_risque: "Faible" | "Moyen" | "Élevé" | "Critique"
       niveau_structure: "livre" | "titre" | "chapitre" | "section"
       priorite: "Basse" | "Moyenne" | "Haute" | "Critique"
+      resultat_controle:
+        | "conforme"
+        | "non_conforme"
+        | "conforme_avec_reserves"
+        | "en_attente"
       statut_action: "A_faire" | "En_cours" | "Termine" | "Bloque"
+      statut_conformite: "conforme" | "non_conforme" | "a_controler"
       statut_lecture: "A_lire" | "Lu" | "Valide"
+      statut_operationnel: "en_service" | "hors_service" | "arret_technique"
       statut_texte: "en_vigueur" | "abroge" | "modifie"
       statut_vigueur: "en_vigueur" | "modifie" | "abroge" | "suspendu"
       type_acte:
@@ -1983,8 +2270,16 @@ export const Constants = {
       niveau_risque: ["Faible", "Moyen", "Élevé", "Critique"],
       niveau_structure: ["livre", "titre", "chapitre", "section"],
       priorite: ["Basse", "Moyenne", "Haute", "Critique"],
+      resultat_controle: [
+        "conforme",
+        "non_conforme",
+        "conforme_avec_reserves",
+        "en_attente",
+      ],
       statut_action: ["A_faire", "En_cours", "Termine", "Bloque"],
+      statut_conformite: ["conforme", "non_conforme", "a_controler"],
       statut_lecture: ["A_lire", "Lu", "Valide"],
+      statut_operationnel: ["en_service", "hors_service", "arret_technique"],
       statut_texte: ["en_vigueur", "abroge", "modifie"],
       statut_vigueur: ["en_vigueur", "modifie", "abroge", "suspendu"],
       type_acte: [
