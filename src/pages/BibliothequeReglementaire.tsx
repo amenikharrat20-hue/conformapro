@@ -11,11 +11,15 @@ import {
   Search, 
   Plus,
   Download,
+  Upload,
   Pencil,
   Trash2,
   ChevronLeft,
   ChevronRight,
-  FileText
+  FileText,
+  Scale,
+  Filter,
+  X
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { textesReglementairesQueries, TexteReglementaire } from "@/lib/textes-queries";
@@ -49,7 +53,7 @@ export default function BibliothequeReglementaire() {
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [editingTexte, setEditingTexte] = useState<TexteReglementaire | null>(null);
   const [deleteTexteId, setDeleteTexteId] = useState<string | null>(null);
-  const [useFullTextSearch, setUseFullTextSearch] = useState(false);
+  const [showFilters, setShowFilters] = useState(true);
   const pageSize = 25;
 
   const { data: domainesList } = useQuery({
@@ -80,7 +84,6 @@ export default function BibliothequeReglementaire() {
       }),
   });
 
-  // Show error toast if query fails
   if (error) {
     toast.error("Erreur lors du chargement des textes réglementaires");
   }
@@ -112,15 +115,31 @@ export default function BibliothequeReglementaire() {
   const getStatutBadge = (statut: string) => {
     switch (statut) {
       case "en_vigueur":
-        return { label: "En vigueur", className: "bg-success text-success-foreground" };
+        return { 
+          label: "En vigueur", 
+          className: "bg-success/10 text-success border border-success/20 font-medium",
+          icon: "✓"
+        };
       case "modifie":
-        return { label: "Modifié", className: "bg-warning text-warning-foreground" };
+        return { 
+          label: "Modifié", 
+          className: "bg-warning/10 text-warning border border-warning/20 font-medium",
+          icon: "⚠"
+        };
       case "abroge":
-        return { label: "Abrogé", className: "bg-destructive text-destructive-foreground" };
+        return { 
+          label: "Abrogé", 
+          className: "bg-destructive/10 text-destructive border border-destructive/20 font-medium",
+          icon: "✕"
+        };
       case "suspendu":
-        return { label: "Suspendu", className: "bg-secondary text-secondary-foreground" };
+        return { 
+          label: "Suspendu", 
+          className: "bg-muted text-muted-foreground border border-border font-medium",
+          icon: "⏸"
+        };
       default:
-        return { label: statut, className: "" };
+        return { label: statut, className: "", icon: "" };
     }
   };
 
@@ -158,40 +177,105 @@ export default function BibliothequeReglementaire() {
     toast.success("Export Excel effectué");
   };
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
-            Bibliothèque réglementaire
-          </h1>
-          <p className="text-muted-foreground mt-2 text-sm sm:text-base">
-            Gestion des textes réglementaires HSE
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => setShowImportDialog(true)}>
-            <Download className="h-4 w-4 mr-2" />
-            Importer CSV
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleExportExcel}>
-            <Download className="h-4 w-4 mr-2" />
-            Exporter Excel
-          </Button>
-          <Button size="sm" onClick={() => { setEditingTexte(null); setShowFormModal(true); }}>
-            <Plus className="h-4 w-4 mr-2" />
-            Ajouter
-          </Button>
-        </div>
-      </div>
+  const activeFiltersCount = [typeFilter, domaineFilter, sousDomaineFilter, statutFilter, anneeFilter]
+    .filter(f => f !== "all").length;
 
-      {/* Filters */}
-      <Card className="shadow-soft">
-        <CardContent className="pt-6">
-          <div className="flex flex-col gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+  const clearAllFilters = () => {
+    setTypeFilter("all");
+    setDomaineFilter("all");
+    setSousDomaineFilter("all");
+    setStatutFilter("all");
+    setAnneeFilter("all");
+    setSearchTerm("");
+    setPage(1);
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-4 sm:p-6 lg:p-8">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header avec gradient */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-primary p-8 shadow-strong">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-accent/10 rounded-full blur-3xl" />
+          <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-4">
+              <div className="p-3 rounded-xl bg-accent/10 backdrop-blur-sm">
+                <Scale className="h-8 w-8 text-accent" />
+              </div>
+              <div>
+                <h1 className="text-3xl sm:text-4xl font-bold text-primary-foreground mb-2">
+                  Bibliothèque Réglementaire
+                </h1>
+                <p className="text-primary-foreground/80 text-sm sm:text-base">
+                  Gestion centralisée des textes juridiques HSE
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button 
+                variant="secondary" 
+                size="sm" 
+                onClick={() => setShowImportDialog(true)}
+                className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                Importer
+              </Button>
+              <Button 
+                variant="secondary" 
+                size="sm" 
+                onClick={handleExportExcel}
+                className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Exporter
+              </Button>
+              <Button 
+                size="sm" 
+                onClick={() => { setEditingTexte(null); setShowFormModal(true); }}
+                className="bg-accent hover:bg-accent/90 text-accent-foreground shadow-gold"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Nouveau texte
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Barre de recherche et filtres améliorés */}
+        <Card className="shadow-medium border-2 border-border/50">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Filter className="h-5 w-5 text-primary" />
+                <CardTitle className="text-lg">Recherche et filtres</CardTitle>
+                {activeFiltersCount > 0 && (
+                  <Badge variant="secondary" className="ml-2">
+                    {activeFiltersCount} filtre{activeFiltersCount > 1 ? 's' : ''}
+                  </Badge>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                {activeFiltersCount > 0 && (
+                  <Button variant="ghost" size="sm" onClick={clearAllFilters}>
+                    <X className="h-4 w-4 mr-1" />
+                    Réinitialiser
+                  </Button>
+                )}
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setShowFilters(!showFilters)}
+                >
+                  {showFilters ? "Masquer" : "Afficher"}
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          
+          <CardContent className="space-y-4">
+            {/* Recherche principale */}
+            <div className="relative">
+              <Search className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground" />
               <Input
                 placeholder="Rechercher par titre, référence, autorité..."
                 value={searchTerm}
@@ -199,252 +283,378 @@ export default function BibliothequeReglementaire() {
                   setSearchTerm(e.target.value);
                   setPage(1);
                 }}
-                className="pl-10"
+                className="pl-12 h-12 text-base border-2 focus:border-accent focus:ring-accent"
               />
+              {searchTerm && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-2 top-2"
+                  onClick={() => setSearchTerm("")}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
             </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-              <Select value={typeFilter} onValueChange={(val) => { setTypeFilter(val); setPage(1); }}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tous les types</SelectItem>
-                  {Object.entries(TYPE_LABELS).map(([value, label]) => (
-                    <SelectItem key={value} value={value}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
 
-              <Select value={statutFilter} onValueChange={(val) => { setStatutFilter(val); setPage(1); }}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Statut" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tous les statuts</SelectItem>
-                  <SelectItem value="en_vigueur">En vigueur</SelectItem>
-                  <SelectItem value="modifie">Modifié</SelectItem>
-                  <SelectItem value="abroge">Abrogé</SelectItem>
-                  <SelectItem value="suspendu">Suspendu</SelectItem>
-                </SelectContent>
-              </Select>
+            {/* Filtres avancés */}
+            {showFilters && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 pt-2 border-t">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    Type
+                  </label>
+                  <Select value={typeFilter} onValueChange={(val) => { setTypeFilter(val); setPage(1); }}>
+                    <SelectTrigger className="border-2">
+                      <SelectValue placeholder="Tous les types" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tous les types</SelectItem>
+                      {Object.entries(TYPE_LABELS).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>
+                          {label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              <Select value={domaineFilter} onValueChange={(val) => { 
-                setDomaineFilter(val); 
-                setSousDomaineFilter("all");
-                setPage(1); 
-              }}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Domaine" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tous les domaines</SelectItem>
-                  {domainesList?.map((domaine) => (
-                    <SelectItem key={domaine.id} value={domaine.id}>
-                      {domaine.libelle}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    Statut
+                  </label>
+                  <Select value={statutFilter} onValueChange={(val) => { setStatutFilter(val); setPage(1); }}>
+                    <SelectTrigger className="border-2">
+                      <SelectValue placeholder="Tous les statuts" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tous les statuts</SelectItem>
+                      <SelectItem value="en_vigueur">✓ En vigueur</SelectItem>
+                      <SelectItem value="modifie">⚠ Modifié</SelectItem>
+                      <SelectItem value="abroge">✕ Abrogé</SelectItem>
+                      <SelectItem value="suspendu">⏸ Suspendu</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              <Select 
-                value={sousDomaineFilter} 
-                onValueChange={(val) => { setSousDomaineFilter(val); setPage(1); }}
-                disabled={domaineFilter === "all"}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sous-domaine" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tous les sous-domaines</SelectItem>
-                  {sousDomainesList?.map((sd) => (
-                    <SelectItem key={sd.id} value={sd.id}>
-                      {sd.libelle}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    Domaine
+                  </label>
+                  <Select value={domaineFilter} onValueChange={(val) => { 
+                    setDomaineFilter(val); 
+                    setSousDomaineFilter("all");
+                    setPage(1); 
+                  }}>
+                    <SelectTrigger className="border-2">
+                      <SelectValue placeholder="Tous les domaines" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tous les domaines</SelectItem>
+                      {domainesList?.map((domaine) => (
+                        <SelectItem key={domaine.id} value={domaine.id}>
+                          {domaine.libelle}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              <Select value={anneeFilter} onValueChange={(val) => { setAnneeFilter(val); setPage(1); }}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Année" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Toutes les années</SelectItem>
-                  {uniqueYears.map((year) => (
-                    <SelectItem key={year} value={String(year)}>
-                      {year}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    Sous-domaine
+                  </label>
+                  <Select 
+                    value={sousDomaineFilter} 
+                    onValueChange={(val) => { setSousDomaineFilter(val); setPage(1); }}
+                    disabled={domaineFilter === "all"}
+                  >
+                    <SelectTrigger className="border-2">
+                      <SelectValue placeholder="Sous-domaine" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tous</SelectItem>
+                      {sousDomainesList?.map((sd) => (
+                        <SelectItem key={sd.id} value={sd.id}>
+                          {sd.libelle}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    Année
+                  </label>
+                  <Select value={anneeFilter} onValueChange={(val) => { setAnneeFilter(val); setPage(1); }}>
+                    <SelectTrigger className="border-2">
+                      <SelectValue placeholder="Toutes" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Toutes les années</SelectItem>
+                      {uniqueYears.map((year) => (
+                        <SelectItem key={year} value={String(year)}>
+                          {year}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Tableau des résultats */}
+        <Card className="shadow-medium">
+          <CardHeader className="border-b bg-muted/30">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <FileText className="h-5 w-5 text-primary" />
+                <div>
+                  <CardTitle className="text-xl">Textes réglementaires</CardTitle>
+                  <CardDescription className="mt-1">
+                    {totalCount} texte{totalCount > 1 ? 's' : ''} trouvé{totalCount > 1 ? 's' : ''}
+                  </CardDescription>
+                </div>
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Results Table */}
-      <Card className="shadow-medium">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-            <FileText className="h-5 w-5 text-primary" />
-            Textes réglementaires
-          </CardTitle>
-          <CardDescription className="text-sm">
-            {totalCount} texte(s) trouvé(s)
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-12 gap-3">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              <p className="text-muted-foreground">Chargement des textes réglementaires...</p>
-            </div>
-          ) : error ? (
-            <div className="flex flex-col items-center justify-center py-12 gap-3">
-              <FileText className="h-12 w-12 text-destructive" />
-              <p className="text-destructive font-medium">Erreur lors du chargement</p>
-              <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
-                Réessayer
-              </Button>
-            </div>
-          ) : textes.length > 0 ? (
-            <>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="cursor-pointer" onClick={() => handleSort("type")}>
-                        Type {sortBy === "type" && (sortOrder === "asc" ? "↑" : "↓")}
-                      </TableHead>
-                      <TableHead className="cursor-pointer" onClick={() => handleSort("reference_officielle")}>
-                        Référence {sortBy === "reference_officielle" && (sortOrder === "asc" ? "↑" : "↓")}
-                      </TableHead>
-                      <TableHead className="cursor-pointer" onClick={() => handleSort("titre")}>
-                        Titre {sortBy === "titre" && (sortOrder === "asc" ? "↑" : "↓")}
-                      </TableHead>
-                      <TableHead className="cursor-pointer" onClick={() => handleSort("autorite")}>
-                        Autorité {sortBy === "autorite" && (sortOrder === "asc" ? "↑" : "↓")}
-                      </TableHead>
-                      <TableHead className="cursor-pointer" onClick={() => handleSort("date_publication")}>
-                        Date publication {sortBy === "date_publication" && (sortOrder === "asc" ? "↑" : "↓")}
-                      </TableHead>
-                      <TableHead>Statut</TableHead>
-                      <TableHead className="text-center">#Articles</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {textes.map((texte: any) => {
-                      const statutInfo = getStatutBadge(texte.statut_vigueur);
-                      const articleCount = texte.articles?.[0]?.count || 0;
-                      
-                      return (
-                        <TableRow key={texte.id} className="hover:bg-muted/50">
-                          <TableCell>
-                            <Badge variant="outline" className="text-xs">
-                              {TYPE_LABELS[texte.type as keyof typeof TYPE_LABELS]}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            {texte.reference_officielle}
-                          </TableCell>
-                          <TableCell>
-                            <div className="max-w-md">
-                              <div className="font-medium text-foreground line-clamp-1">
-                                {texte.titre}
-                              </div>
-                              {texte.resume && (
-                                <div className="text-xs text-muted-foreground mt-1 line-clamp-1">
-                                  {texte.resume}
+          </CardHeader>
+          
+          <CardContent className="p-0">
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center py-16 gap-4">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
+                <p className="text-muted-foreground font-medium">Chargement des textes...</p>
+              </div>
+            ) : error ? (
+              <div className="flex flex-col items-center justify-center py-16 gap-4">
+                <div className="p-4 rounded-full bg-destructive/10">
+                  <FileText className="h-12 w-12 text-destructive" />
+                </div>
+                <div className="text-center">
+                  <p className="text-destructive font-semibold mb-2">Erreur de chargement</p>
+                  <p className="text-sm text-muted-foreground">Impossible de charger les textes réglementaires</p>
+                </div>
+                <Button variant="outline" onClick={() => window.location.reload()}>
+                  Réessayer
+                </Button>
+              </div>
+            ) : textes.length > 0 ? (
+              <>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-muted/50 hover:bg-muted/50">
+                        <TableHead className="font-semibold cursor-pointer hover:text-primary transition-colors" onClick={() => handleSort("type")}>
+                          <div className="flex items-center gap-1">
+                            Type
+                            {sortBy === "type" && (
+                              <span className="text-accent">{sortOrder === "asc" ? "↑" : "↓"}</span>
+                            )}
+                          </div>
+                        </TableHead>
+                        <TableHead className="font-semibold cursor-pointer hover:text-primary transition-colors" onClick={() => handleSort("reference_officielle")}>
+                          <div className="flex items-center gap-1">
+                            Référence
+                            {sortBy === "reference_officielle" && (
+                              <span className="text-accent">{sortOrder === "asc" ? "↑" : "↓"}</span>
+                            )}
+                          </div>
+                        </TableHead>
+                        <TableHead className="font-semibold cursor-pointer hover:text-primary transition-colors" onClick={() => handleSort("titre")}>
+                          <div className="flex items-center gap-1">
+                            Titre
+                            {sortBy === "titre" && (
+                              <span className="text-accent">{sortOrder === "asc" ? "↑" : "↓"}</span>
+                            )}
+                          </div>
+                        </TableHead>
+                        <TableHead className="font-semibold cursor-pointer hover:text-primary transition-colors" onClick={() => handleSort("autorite")}>
+                          <div className="flex items-center gap-1">
+                            Autorité
+                            {sortBy === "autorite" && (
+                              <span className="text-accent">{sortOrder === "asc" ? "↑" : "↓"}</span>
+                            )}
+                          </div>
+                        </TableHead>
+                        <TableHead className="font-semibold cursor-pointer hover:text-primary transition-colors" onClick={() => handleSort("date_publication")}>
+                          <div className="flex items-center gap-1">
+                            Date
+                            {sortBy === "date_publication" && (
+                              <span className="text-accent">{sortOrder === "asc" ? "↑" : "↓"}</span>
+                            )}
+                          </div>
+                        </TableHead>
+                        <TableHead className="font-semibold">Statut</TableHead>
+                        <TableHead className="font-semibold text-center">Articles</TableHead>
+                        <TableHead className="font-semibold text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {textes.map((texte: any) => {
+                        const statutInfo = getStatutBadge(texte.statut_vigueur);
+                        const articleCount = texte.articles?.[0]?.count || 0;
+                        
+                        return (
+                          <TableRow 
+                            key={texte.id} 
+                            className="hover:bg-accent/5 transition-colors cursor-pointer"
+                            onClick={() => navigate(`/veille/bibliotheque/textes/${texte.id}`)}
+                          >
+                            <TableCell>
+                              <Badge variant="outline" className="text-xs font-medium">
+                                {TYPE_LABELS[texte.type as keyof typeof TYPE_LABELS]}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="font-semibold text-sm">
+                              {texte.reference_officielle}
+                            </TableCell>
+                            <TableCell>
+                              <div className="max-w-md">
+                                <div className="font-medium text-foreground line-clamp-2 mb-1">
+                                  {texte.titre}
                                 </div>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-sm">
-                            {texte.autorite || "—"}
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {texte.date_publication
-                              ? new Date(texte.date_publication).toLocaleDateString("fr-FR")
-                              : "—"}
-                          </TableCell>
-                          <TableCell>
-                            <Badge className={statutInfo.className}>
-                              {statutInfo.label}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-center text-sm font-medium">
-                            {articleCount}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex justify-end gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => navigate(`/veille/bibliotheque/textes/${texte.id}`)}
-                              >
-                                <FileText className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleEdit(texte)}
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setDeleteTexteId(texte.id)}
-                              >
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-
-              {/* Pagination */}
-              <div className="flex items-center justify-between mt-4">
-                <div className="text-sm text-muted-foreground">
-                  Page {page} sur {totalPages}
+                                {texte.resume && (
+                                  <div className="text-xs text-muted-foreground line-clamp-1">
+                                    {texte.resume}
+                                  </div>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {texte.autorite || "—"}
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
+                              {texte.date_publication
+                                ? new Date(texte.date_publication).toLocaleDateString("fr-FR")
+                                : "—"}
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={statutInfo.className}>
+                                <span className="mr-1">{statutInfo.icon}</span>
+                                {statutInfo.label}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <div className="inline-flex items-center justify-center px-2.5 py-1 rounded-md bg-primary/5 text-primary font-semibold text-sm">
+                                {articleCount}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                              <div className="flex justify-end gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigate(`/veille/bibliotheque/textes/${texte.id}`);
+                                  }}
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <FileText className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEdit(texte);
+                                  }}
+                                  className="h-8 w-8 p-0 hover:text-accent"
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setDeleteTexteId(texte.id);
+                                  }}
+                                  className="h-8 w-8 p-0 hover:text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage(page - 1)}
-                    disabled={page === 1}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPage(page + 1)}
-                    disabled={page === totalPages}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              Aucun texte trouvé
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
-      {/* Form Modal */}
+                {/* Pagination améliorée */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between px-6 py-4 border-t bg-muted/20">
+                    <div className="text-sm text-muted-foreground">
+                      Page <span className="font-semibold text-foreground">{page}</span> sur{" "}
+                      <span className="font-semibold text-foreground">{totalPages}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage(1)}
+                        disabled={page === 1}
+                        className="hidden sm:flex"
+                      >
+                        Première
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage(page - 1)}
+                        disabled={page === 1}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                        <span className="hidden sm:inline ml-1">Précédent</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage(page + 1)}
+                        disabled={page === totalPages}
+                      >
+                        <span className="hidden sm:inline mr-1">Suivant</span>
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage(totalPages)}
+                        disabled={page === totalPages}
+                        className="hidden sm:flex"
+                      >
+                        Dernière
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="text-center py-16">
+                <div className="inline-flex p-4 rounded-full bg-muted/50 mb-4">
+                  <FileText className="h-12 w-12 text-muted-foreground" />
+                </div>
+                <p className="text-lg font-medium text-foreground mb-2">Aucun texte trouvé</p>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Essayez de modifier vos critères de recherche
+                </p>
+                {activeFiltersCount > 0 && (
+                  <Button variant="outline" onClick={clearAllFilters}>
+                    Réinitialiser les filtres
+                  </Button>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Modals */}
       <TexteFormModal
         open={showFormModal}
         onOpenChange={(open) => {
@@ -454,7 +664,6 @@ export default function BibliothequeReglementaire() {
         texte={editingTexte}
       />
 
-      {/* Import CSV Dialog */}
       <ImportCSVDialog
         open={showImportDialog}
         onOpenChange={setShowImportDialog}
@@ -463,7 +672,6 @@ export default function BibliothequeReglementaire() {
         }}
       />
 
-      {/* Delete Confirmation */}
       <AlertDialog open={!!deleteTexteId} onOpenChange={() => setDeleteTexteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
