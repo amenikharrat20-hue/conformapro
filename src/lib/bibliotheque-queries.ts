@@ -181,6 +181,50 @@ export const importHelpers = {
   }
 };
 
+// Versioning helpers
+export const versioningHelpers = {
+  async createNewVersion(acteId: string, changeReason: string) {
+    // Get current acte
+    const { data: currentActe, error: fetchError } = await supabase
+      .from('actes_reglementaires')
+      .select('*')
+      .eq('id', acteId)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    const newVersion = (currentActe.version || 1) + 1;
+
+    // Update acte with new version
+    const { error: updateError } = await supabase
+      .from('actes_reglementaires')
+      .update({
+        version: newVersion,
+        previous_version_id: acteId,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', acteId);
+
+    if (updateError) throw updateError;
+
+    // Log in changelog
+    const { error: logError } = await supabase
+      .from('changelog_reglementaire')
+      .insert([{
+        acte_id: acteId,
+        type_changement: 'version_update',
+        date_changement: new Date().toISOString(),
+        version_anterieure: currentActe.version || 1,
+        nouvelle_version: newVersion,
+        resume: changeReason,
+      }]);
+
+    if (logError) throw logError;
+
+    return newVersion;
+  }
+};
+
 // Export helpers
 export const exportHelpers = {
   async generateActePDF(acteId: string) {

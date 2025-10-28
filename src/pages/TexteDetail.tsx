@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -5,15 +6,18 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, FileText, Download, Edit, ExternalLink } from "lucide-react";
+import { ArrowLeft, FileText, Download, Edit, ExternalLink, GitBranch } from "lucide-react";
 import { actesQueries, articlesQueries } from "@/lib/actes-queries";
 import { ArticlesTab } from "@/components/ArticlesTab";
 import { ChangelogManager } from "@/components/ChangelogManager";
+import { AnnexesTab } from "@/components/AnnexesTab";
+import { TexteVersionDrawer } from "@/components/TexteVersionDrawer";
 import { ExportActePDF } from "@/components/ExportActePDF";
 
 export default function TexteDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [versionDrawerOpen, setVersionDrawerOpen] = useState(false);
 
   const { data: texte, isLoading } = useQuery({
     queryKey: ["acte", id],
@@ -113,8 +117,12 @@ export default function TexteDetail() {
           </div>
         </div>
         <div className="flex gap-2">
-          <ExportActePDF acteId={id!} acteTitle={texte.intitule} />
-          <Button variant="outline" onClick={() => navigate(`/actes/${id}/editer`)}>
+          <Button variant="outline" size="sm" onClick={() => setVersionDrawerOpen(true)}>
+            <GitBranch className="h-4 w-4 mr-2" />
+            Versions
+          </Button>
+          <ExportActePDF acteId={id!} acteTitle={texte.intitule} variant="outline" size="sm" />
+          <Button variant="outline" size="sm" onClick={() => navigate(`/actes/${id}/editer`)}>
             <Edit className="h-4 w-4 mr-2" />
             Éditer
           </Button>
@@ -270,11 +278,14 @@ export default function TexteDetail() {
         </CardContent>
       </Card>
 
-      {/* Onglets: Articles & Historique */}
+      {/* Onglets: Articles, Annexes & Historique */}
       <Tabs defaultValue="articles" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="articles">
             Articles ({articles?.length || 0})
+          </TabsTrigger>
+          <TabsTrigger value="annexes">
+            Annexes
           </TabsTrigger>
           <TabsTrigger value="historique">
             Historique
@@ -285,10 +296,22 @@ export default function TexteDetail() {
           <ArticlesTab acteId={id!} articles={articles || []} />
         </TabsContent>
 
+        <TabsContent value="annexes">
+          <AnnexesTab acteId={id!} />
+        </TabsContent>
+
         <TabsContent value="historique">
           <ChangelogManager acteId={id!} />
         </TabsContent>
       </Tabs>
+
+      {/* Version History Drawer */}
+      <TexteVersionDrawer
+        open={versionDrawerOpen}
+        onOpenChange={setVersionDrawerOpen}
+        acteId={id!}
+        currentVersion={texte.version || 1}
+      />
     </div>
   );
 }

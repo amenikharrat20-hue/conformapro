@@ -9,11 +9,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Edit, Trash2, GitBranch, Save, X } from "lucide-react";
+import { Plus, Edit, Trash2, GitBranch, Save, X, GitCompare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { articlesQueries } from "@/lib/actes-queries";
+import { articlesQueries, articleVersionsQueries } from "@/lib/actes-queries";
 import { supabase } from "@/integrations/supabase/client";
 import type { Article } from "@/types/actes";
+import { ArticleVersionComparison } from "./ArticleVersionComparison";
 
 interface ArticlesTabProps {
   acteId: string;
@@ -33,6 +34,8 @@ export function ArticlesTab({ acteId, articles }: ArticlesTabProps) {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [comparisonArticleId, setComparisonArticleId] = useState<string | null>(null);
+  const [comparisonOpen, setComparisonOpen] = useState(false);
   const [formData, setFormData] = useState<ArticleFormData>({
     numero: "",
     titre_court: "",
@@ -65,6 +68,13 @@ export function ArticlesTab({ acteId, articles }: ArticlesTabProps) {
       if (error) throw error;
       return data;
     },
+  });
+
+  // Fetch versions for comparison article
+  const { data: articleVersions } = useQuery({
+    queryKey: ["article-versions", comparisonArticleId],
+    queryFn: () => articleVersionsQueries.getByArticleId(comparisonArticleId!),
+    enabled: !!comparisonArticleId && comparisonOpen,
   });
 
   const createMutation = useMutation({
@@ -362,8 +372,20 @@ export function ArticlesTab({ acteId, articles }: ArticlesTabProps) {
                               variant="ghost"
                               size="sm"
                               onClick={() => navigate(`/actes/${acteId}/articles/${article.id}/versions`)}
+                              title="Voir les versions"
                             >
                               <GitBranch className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setComparisonArticleId(article.id);
+                                setComparisonOpen(true);
+                              }}
+                              title="Comparer les versions"
+                            >
+                              <GitCompare className="h-4 w-4 text-primary" />
                             </Button>
                           </div>
                         </TableCell>
@@ -379,6 +401,16 @@ export function ArticlesTab({ acteId, articles }: ArticlesTabProps) {
           </div>
         )}
       </CardContent>
+
+      {/* Version Comparison Modal */}
+      {comparisonArticleId && (
+        <ArticleVersionComparison
+          open={comparisonOpen}
+          onOpenChange={setComparisonOpen}
+          versions={articleVersions || []}
+          currentVersion={articles.find(a => a.id === comparisonArticleId)}
+        />
+      )}
     </Card>
   );
 }

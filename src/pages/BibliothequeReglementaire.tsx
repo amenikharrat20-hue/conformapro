@@ -20,8 +20,10 @@ import {
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { textesReglementairesQueries, TexteReglementaire } from "@/lib/textes-queries";
 import { domainesQueries, sousDomainesQueries } from "@/lib/actes-queries";
+import { searchQueries } from "@/lib/bibliotheque-queries";
 import { toast } from "sonner";
 import { TexteFormModal } from "@/components/TexteFormModal";
+import { ImportCSVDialog } from "@/components/ImportCSVDialog";
 import * as XLSX from 'xlsx';
 
 const TYPE_LABELS = {
@@ -44,8 +46,10 @@ export default function BibliothequeReglementaire() {
   const [sortBy, setSortBy] = useState("date_publication");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [showFormModal, setShowFormModal] = useState(false);
+  const [showImportDialog, setShowImportDialog] = useState(false);
   const [editingTexte, setEditingTexte] = useState<TexteReglementaire | null>(null);
   const [deleteTexteId, setDeleteTexteId] = useState<string | null>(null);
+  const [useFullTextSearch, setUseFullTextSearch] = useState(false);
   const pageSize = 25;
 
   const { data: domainesList } = useQuery({
@@ -167,6 +171,10 @@ export default function BibliothequeReglementaire() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => setShowImportDialog(true)}>
+            <Download className="h-4 w-4 mr-2" />
+            Importer CSV
+          </Button>
           <Button variant="outline" size="sm" onClick={handleExportExcel}>
             <Download className="h-4 w-4 mr-2" />
             Exporter Excel
@@ -444,6 +452,15 @@ export default function BibliothequeReglementaire() {
           if (!open) setEditingTexte(null);
         }}
         texte={editingTexte}
+      />
+
+      {/* Import CSV Dialog */}
+      <ImportCSVDialog
+        open={showImportDialog}
+        onOpenChange={setShowImportDialog}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ["textes-reglementaires"] });
+        }}
       />
 
       {/* Delete Confirmation */}
