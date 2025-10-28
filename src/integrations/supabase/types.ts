@@ -56,10 +56,91 @@ export type Database = {
           },
         ]
       }
+      actes_annexes: {
+        Row: {
+          acte_id: string
+          created_at: string | null
+          file_size: number | null
+          file_type: string | null
+          file_url: string
+          id: string
+          label: string
+          updated_at: string | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          acte_id: string
+          created_at?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          file_url: string
+          id?: string
+          label: string
+          updated_at?: string | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          acte_id?: string
+          created_at?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string
+          id?: string
+          label?: string
+          updated_at?: string | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "actes_annexes_acte_id_fkey"
+            columns: ["acte_id"]
+            isOneToOne: false
+            referencedRelation: "actes_reglementaires"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      actes_applicabilite_mapping: {
+        Row: {
+          acte_id: string
+          created_at: string | null
+          establishment_type: string
+          id: string
+          risk_class: string | null
+          sector: string | null
+        }
+        Insert: {
+          acte_id: string
+          created_at?: string | null
+          establishment_type: string
+          id?: string
+          risk_class?: string | null
+          sector?: string | null
+        }
+        Update: {
+          acte_id?: string
+          created_at?: string | null
+          establishment_type?: string
+          id?: string
+          risk_class?: string | null
+          sector?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "actes_applicabilite_mapping_acte_id_fkey"
+            columns: ["acte_id"]
+            isOneToOne: false
+            referencedRelation: "actes_reglementaires"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       actes_reglementaires: {
         Row: {
           annee: number | null
+          applicability: Json | null
           autorite_emettrice: string | null
+          content: string | null
           created_at: string | null
           created_by: string | null
           date_entree_vigueur_effective: string | null
@@ -80,21 +161,28 @@ export type Database = {
           notes_editoriales: string | null
           numero_officiel: string | null
           objet_resume: string | null
+          previous_version_id: string | null
           reference: string
           reference_officielle: string | null
           resume: string | null
+          search_vector: unknown
           source: string | null
+          source_url: string | null
           statut: Database["public"]["Enums"]["statut_texte"] | null
           statut_vigueur: Database["public"]["Enums"]["statut_vigueur"]
+          tags: string[] | null
           titre: string
           type_acte: Database["public"]["Enums"]["type_acte"]
           updated_at: string | null
           url_pdf_ar: string | null
           url_pdf_fr: string | null
+          version: number | null
         }
         Insert: {
           annee?: number | null
+          applicability?: Json | null
           autorite_emettrice?: string | null
+          content?: string | null
           created_at?: string | null
           created_by?: string | null
           date_entree_vigueur_effective?: string | null
@@ -115,21 +203,28 @@ export type Database = {
           notes_editoriales?: string | null
           numero_officiel?: string | null
           objet_resume?: string | null
+          previous_version_id?: string | null
           reference: string
           reference_officielle?: string | null
           resume?: string | null
+          search_vector?: unknown
           source?: string | null
+          source_url?: string | null
           statut?: Database["public"]["Enums"]["statut_texte"] | null
           statut_vigueur?: Database["public"]["Enums"]["statut_vigueur"]
+          tags?: string[] | null
           titre: string
           type_acte?: Database["public"]["Enums"]["type_acte"]
           updated_at?: string | null
           url_pdf_ar?: string | null
           url_pdf_fr?: string | null
+          version?: number | null
         }
         Update: {
           annee?: number | null
+          applicability?: Json | null
           autorite_emettrice?: string | null
+          content?: string | null
           created_at?: string | null
           created_by?: string | null
           date_entree_vigueur_effective?: string | null
@@ -150,19 +245,32 @@ export type Database = {
           notes_editoriales?: string | null
           numero_officiel?: string | null
           objet_resume?: string | null
+          previous_version_id?: string | null
           reference?: string
           reference_officielle?: string | null
           resume?: string | null
+          search_vector?: unknown
           source?: string | null
+          source_url?: string | null
           statut?: Database["public"]["Enums"]["statut_texte"] | null
           statut_vigueur?: Database["public"]["Enums"]["statut_vigueur"]
+          tags?: string[] | null
           titre?: string
           type_acte?: Database["public"]["Enums"]["type_acte"]
           updated_at?: string | null
           url_pdf_ar?: string | null
           url_pdf_fr?: string | null
+          version?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "actes_reglementaires_previous_version_id_fkey"
+            columns: ["previous_version_id"]
+            isOneToOne: false
+            referencedRelation: "actes_reglementaires"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       actions_correctives: {
         Row: {
@@ -2288,6 +2396,16 @@ export type Database = {
           fixed_count: number
         }[]
       }
+      get_applicable_actes_for_site: {
+        Args: { site_id_param: string }
+        Returns: {
+          acte_id: string
+          intitule: string
+          match_score: number
+          reference_officielle: string
+          statut_vigueur: string
+        }[]
+      }
       get_user_client_id: { Args: { _user_id: string }; Returns: string }
       get_user_site_id: { Args: { _user_id: string }; Returns: string }
       has_permission: {
@@ -2312,6 +2430,17 @@ export type Database = {
         Returns: Json
       }
       run_integrity_checks: { Args: never; Returns: Json }
+      search_actes_reglementaires: {
+        Args: { limit_count?: number; search_query: string }
+        Returns: {
+          id: string
+          intitule: string
+          rank: number
+          reference_officielle: string
+        }[]
+      }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
     }
     Enums: {
       app_role:

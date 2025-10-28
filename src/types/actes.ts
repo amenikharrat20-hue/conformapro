@@ -52,6 +52,12 @@ export interface SousDomaineApplication {
   deleted_at?: string;
 }
 
+export interface Applicability {
+  establishment_types: string[];
+  sectors: string[];
+  risk_classes: string[];
+}
+
 export interface ActeReglementaire {
   id: string;
   type_acte: TypeActe;
@@ -75,11 +81,40 @@ export interface ActeReglementaire {
   lien_pdf?: string;
   notes_editoriales?: string;
   date_entree_vigueur_effective?: string;
+  // Nouveaux champs
+  tags?: string[];
+  applicability?: Applicability;
+  content?: string;
+  source_url?: string;
+  version?: number;
+  previous_version_id?: string;
+  search_vector?: string;
   created_at: string;
   updated_at: string;
   created_by?: string;
   deleted_at?: string;
   types_acte?: TypeActeRow;
+}
+
+export interface ActeAnnexe {
+  id: string;
+  acte_id: string;
+  label: string;
+  file_url: string;
+  file_size?: number;
+  file_type?: string;
+  uploaded_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ApplicabiliteMapping {
+  id: string;
+  acte_id: string;
+  establishment_type: string;
+  risk_class?: string;
+  sector?: string;
+  created_at: string;
 }
 
 export interface Article {
