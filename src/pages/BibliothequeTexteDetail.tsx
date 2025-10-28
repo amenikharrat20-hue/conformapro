@@ -54,20 +54,25 @@ export default function BibliothequeTexteDetail() {
     enabled: !!id,
   });
 
-  const { data: articles, isLoading: articlesLoading } = useQuery({
+  const { data: articles = [], isLoading: articlesLoading } = useQuery({
     queryKey: ["texte-articles", id],
     queryFn: () => textesArticlesQueries.getByTexteId(id!),
     enabled: !!id,
   });
 
-  // Fetch versions for each article
-  const versionsQueries = (articles || []).map(article => 
-    useQuery({
-      queryKey: ["article-versions", article.id],
-      queryFn: () => textesArticlesVersionsQueries.getByArticleId(article.id),
-      enabled: expandedArticles.includes(article.id),
-    })
-  );
+  // Fetch versions for a specific article when expanded
+  const { data: articleVersionsMap = {} } = useQuery({
+    queryKey: ["article-versions-map", id, expandedArticles],
+    queryFn: async () => {
+      const map: Record<string, any[]> = {};
+      for (const articleId of expandedArticles) {
+        const versions = await textesArticlesVersionsQueries.getByArticleId(articleId);
+        map[articleId] = versions || [];
+      }
+      return map;
+    },
+    enabled: !!id && expandedArticles.length > 0,
+  });
 
   // Show error toast if query fails
   if (error) {
@@ -289,9 +294,9 @@ export default function BibliothequeTexteDetail() {
 
           {articles && articles.length > 0 ? (
             <div className="space-y-3">
-              {articles.map((article, index) => {
+              {articles.map((article) => {
                 const isExpanded = expandedArticles.includes(article.id);
-                const versionsData = versionsQueries[index]?.data || [];
+                const versionsData = articleVersionsMap[article.id] || [];
 
                 return (
                   <Card key={article.id} className="shadow-soft">
@@ -549,7 +554,7 @@ export default function BibliothequeTexteDetail() {
         <ArticleVersionComparison
           open={showComparisonModal}
           onOpenChange={setShowComparisonModal}
-          versions={versionsQueries[articles?.findIndex(a => a.id === comparisonArticle.id) || 0]?.data || []}
+          versions={articleVersionsMap[comparisonArticle.id] || []}
           currentVersion={comparisonArticle}
         />
       )}
