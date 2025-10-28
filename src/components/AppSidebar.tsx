@@ -23,6 +23,7 @@ import {
   CollapsibleContent,
 } from "@/components/ui/collapsible";
 import { UserMenu } from "@/components/UserMenu";
+import conformaProLogo from "@/assets/conforma-pro-logo.png";
 
 interface SubMenuItem {
   title: string;
@@ -80,15 +81,20 @@ export function AppSidebar() {
   return (
     <Sidebar className={isCollapsed ? "w-14" : "w-64"} collapsible="icon">
       <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
-        {!isCollapsed && (
+        {!isCollapsed ? (
           <div className="flex items-center gap-2">
-            <ShieldCheck className="h-6 w-6 text-sidebar-primary" />
-            <span className="font-bold text-lg text-sidebar-foreground">Conforma Pro</span>
+            <img src={conformaProLogo} alt="Conforma Pro" className="h-8 w-auto" />
+          </div>
+        ) : (
+          <div className="flex items-center justify-center w-full">
+            <img src={conformaProLogo} alt="Conforma Pro" className="h-6 w-6 object-contain" />
           </div>
         )}
-        <SidebarTrigger className={isCollapsed ? "mx-auto" : ""}>
-          <Menu className="h-5 w-5" />
-        </SidebarTrigger>
+        {!isCollapsed && (
+          <SidebarTrigger>
+            <Menu className="h-5 w-5" />
+          </SidebarTrigger>
+        )}
       </div>
 
       <SidebarContent>
