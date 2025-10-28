@@ -2030,6 +2030,8 @@ export type Database = {
         | "gestionnaire_hse"
         | "chef_site"
         | "lecteur"
+        | "med_practitioner"
+        | "med_admin"
       domaine_reglementaire:
         | "Incendie"
         | "Sécurité du travail"
@@ -2231,6 +2233,8 @@ export const Constants = {
         "gestionnaire_hse",
         "chef_site",
         "lecteur",
+        "med_practitioner",
+        "med_admin",
       ],
       domaine_reglementaire: [
         "Incendie",
