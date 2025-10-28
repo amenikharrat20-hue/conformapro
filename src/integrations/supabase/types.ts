@@ -692,6 +692,72 @@ export type Database = {
         }
         Relationships: []
       }
+      employes: {
+        Row: {
+          aptitude_medicale: string | null
+          client_id: string
+          created_at: string
+          date_embauche: string | null
+          date_naissance: string | null
+          id: string
+          matricule: string
+          nom: string
+          poste: string | null
+          prenom: string
+          risques_exposition: string[] | null
+          site_id: string | null
+          statut_emploi: string | null
+          updated_at: string
+        }
+        Insert: {
+          aptitude_medicale?: string | null
+          client_id: string
+          created_at?: string
+          date_embauche?: string | null
+          date_naissance?: string | null
+          id?: string
+          matricule: string
+          nom: string
+          poste?: string | null
+          prenom: string
+          risques_exposition?: string[] | null
+          site_id?: string | null
+          statut_emploi?: string | null
+          updated_at?: string
+        }
+        Update: {
+          aptitude_medicale?: string | null
+          client_id?: string
+          created_at?: string
+          date_embauche?: string | null
+          date_naissance?: string | null
+          id?: string
+          matricule?: string
+          nom?: string
+          poste?: string | null
+          prenom?: string
+          risques_exposition?: string[] | null
+          site_id?: string | null
+          statut_emploi?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employes_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       equipements_controle: {
         Row: {
           batiment: string | null
@@ -1039,6 +1105,230 @@ export type Database = {
             columns: ["delegation_id"]
             isOneToOne: false
             referencedRelation: "delegations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      med_documents: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_size: number | null
+          file_url: string
+          id: string
+          type_doc: Database["public"]["Enums"]["type_document_medical"]
+          uploaded_by: string | null
+          valid_until: string | null
+          version: number
+          visite_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_size?: number | null
+          file_url: string
+          id?: string
+          type_doc: Database["public"]["Enums"]["type_document_medical"]
+          uploaded_by?: string | null
+          valid_until?: string | null
+          version?: number
+          visite_id: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_size?: number | null
+          file_url?: string
+          id?: string
+          type_doc?: Database["public"]["Enums"]["type_document_medical"]
+          uploaded_by?: string | null
+          valid_until?: string | null
+          version?: number
+          visite_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "med_documents_visite_id_fkey"
+            columns: ["visite_id"]
+            isOneToOne: false
+            referencedRelation: "med_visites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      med_notes_confidentielles: {
+        Row: {
+          contre_indications: string | null
+          created_at: string
+          created_by: string | null
+          examens_realises: string | null
+          id: string
+          observations: string | null
+          propositions_amenagement: string | null
+          updated_at: string
+          updated_by: string | null
+          visite_id: string
+        }
+        Insert: {
+          contre_indications?: string | null
+          created_at?: string
+          created_by?: string | null
+          examens_realises?: string | null
+          id?: string
+          observations?: string | null
+          propositions_amenagement?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          visite_id: string
+        }
+        Update: {
+          contre_indications?: string | null
+          created_at?: string
+          created_by?: string | null
+          examens_realises?: string | null
+          id?: string
+          observations?: string | null
+          propositions_amenagement?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          visite_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "med_notes_confidentielles_visite_id_fkey"
+            columns: ["visite_id"]
+            isOneToOne: false
+            referencedRelation: "med_visites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      med_periodicite_rules: {
+        Row: {
+          actif: boolean
+          created_at: string
+          description: string | null
+          id: string
+          key: string
+          libelle: string
+          periodicite_mois: number
+          updated_at: string
+        }
+        Insert: {
+          actif?: boolean
+          created_at?: string
+          description?: string | null
+          id?: string
+          key: string
+          libelle: string
+          periodicite_mois: number
+          updated_at?: string
+        }
+        Update: {
+          actif?: boolean
+          created_at?: string
+          description?: string | null
+          id?: string
+          key?: string
+          libelle?: string
+          periodicite_mois?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      med_visites: {
+        Row: {
+          client_id: string
+          created_at: string
+          created_by: string | null
+          date_planifiee: string
+          date_realisee: string | null
+          employe_id: string
+          id: string
+          medecin_nom: string | null
+          medecin_organisme: string | null
+          motif: string | null
+          prochaine_echeance: string | null
+          restrictions: string | null
+          resultat_aptitude:
+            | Database["public"]["Enums"]["resultat_aptitude"]
+            | null
+          site_id: string | null
+          sms_flags: string[] | null
+          statut_visite: Database["public"]["Enums"]["statut_visite_medicale"]
+          type_visite: Database["public"]["Enums"]["type_visite_medicale"]
+          updated_at: string
+          updated_by: string | null
+          validite_jusqua: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          date_planifiee: string
+          date_realisee?: string | null
+          employe_id: string
+          id?: string
+          medecin_nom?: string | null
+          medecin_organisme?: string | null
+          motif?: string | null
+          prochaine_echeance?: string | null
+          restrictions?: string | null
+          resultat_aptitude?:
+            | Database["public"]["Enums"]["resultat_aptitude"]
+            | null
+          site_id?: string | null
+          sms_flags?: string[] | null
+          statut_visite?: Database["public"]["Enums"]["statut_visite_medicale"]
+          type_visite: Database["public"]["Enums"]["type_visite_medicale"]
+          updated_at?: string
+          updated_by?: string | null
+          validite_jusqua?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          date_planifiee?: string
+          date_realisee?: string | null
+          employe_id?: string
+          id?: string
+          medecin_nom?: string | null
+          medecin_organisme?: string | null
+          motif?: string | null
+          prochaine_echeance?: string | null
+          restrictions?: string | null
+          resultat_aptitude?:
+            | Database["public"]["Enums"]["resultat_aptitude"]
+            | null
+          site_id?: string | null
+          sms_flags?: string[] | null
+          statut_visite?: Database["public"]["Enums"]["statut_visite_medicale"]
+          type_visite?: Database["public"]["Enums"]["type_visite_medicale"]
+          updated_at?: string
+          updated_by?: string | null
+          validite_jusqua?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "med_visites_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "med_visites_employe_id_fkey"
+            columns: ["employe_id"]
+            isOneToOne: false
+            referencedRelation: "employes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "med_visites_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
             referencedColumns: ["id"]
           },
         ]
@@ -2068,6 +2358,13 @@ export type Database = {
       niveau_risque: "Faible" | "Moyen" | "Élevé" | "Critique"
       niveau_structure: "livre" | "titre" | "chapitre" | "section"
       priorite: "Basse" | "Moyenne" | "Haute" | "Critique"
+      resultat_aptitude:
+        | "APTE"
+        | "APTE_RESTRICTIONS"
+        | "INAPTE_TEMP"
+        | "INAPTE_DEFINITIVE"
+        | "AVIS_RESERVE"
+        | "EN_ATTENTE"
       resultat_controle:
         | "conforme"
         | "non_conforme"
@@ -2079,6 +2376,12 @@ export type Database = {
       statut_operationnel: "en_service" | "hors_service" | "arret_technique"
       statut_texte: "en_vigueur" | "abroge" | "modifie"
       statut_vigueur: "en_vigueur" | "modifie" | "abroge" | "suspendu"
+      statut_visite_medicale:
+        | "PLANIFIEE"
+        | "REALISEE"
+        | "REPORTEE"
+        | "ANNULEE"
+        | "NO_SHOW"
       type_acte:
         | "loi"
         | "loi_org"
@@ -2091,6 +2394,11 @@ export type Database = {
         | "circulaire"
         | "decision"
         | "rectificatif"
+      type_document_medical:
+        | "CONVOCATION"
+        | "AVIS_APTITUDE"
+        | "JUSTIFICATIF"
+        | "AUTRE"
       type_preuve: "procedure" | "rapport" | "certificat" | "photo" | "autre"
       type_relation:
         | "modifie"
@@ -2100,6 +2408,12 @@ export type Database = {
         | "rectifie"
         | "renvoi"
       type_texte_reglementaire: "LOI" | "ARRETE" | "DECRET" | "CIRCULAIRE"
+      type_visite_medicale:
+        | "EMBAUCHE"
+        | "PERIODIQUE"
+        | "REPRISE"
+        | "CHANGEMENT_POSTE"
+        | "SMS"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2274,6 +2588,14 @@ export const Constants = {
       niveau_risque: ["Faible", "Moyen", "Élevé", "Critique"],
       niveau_structure: ["livre", "titre", "chapitre", "section"],
       priorite: ["Basse", "Moyenne", "Haute", "Critique"],
+      resultat_aptitude: [
+        "APTE",
+        "APTE_RESTRICTIONS",
+        "INAPTE_TEMP",
+        "INAPTE_DEFINITIVE",
+        "AVIS_RESERVE",
+        "EN_ATTENTE",
+      ],
       resultat_controle: [
         "conforme",
         "non_conforme",
@@ -2286,6 +2608,13 @@ export const Constants = {
       statut_operationnel: ["en_service", "hors_service", "arret_technique"],
       statut_texte: ["en_vigueur", "abroge", "modifie"],
       statut_vigueur: ["en_vigueur", "modifie", "abroge", "suspendu"],
+      statut_visite_medicale: [
+        "PLANIFIEE",
+        "REALISEE",
+        "REPORTEE",
+        "ANNULEE",
+        "NO_SHOW",
+      ],
       type_acte: [
         "loi",
         "loi_org",
@@ -2299,6 +2628,12 @@ export const Constants = {
         "decision",
         "rectificatif",
       ],
+      type_document_medical: [
+        "CONVOCATION",
+        "AVIS_APTITUDE",
+        "JUSTIFICATIF",
+        "AUTRE",
+      ],
       type_preuve: ["procedure", "rapport", "certificat", "photo", "autre"],
       type_relation: [
         "modifie",
@@ -2309,6 +2644,13 @@ export const Constants = {
         "renvoi",
       ],
       type_texte_reglementaire: ["LOI", "ARRETE", "DECRET", "CIRCULAIRE"],
+      type_visite_medicale: [
+        "EMBAUCHE",
+        "PERIODIQUE",
+        "REPRISE",
+        "CHANGEMENT_POSTE",
+        "SMS",
+      ],
     },
   },
 } as const
