@@ -9,6 +9,7 @@ import { ArrowLeft, FileText, Download, Edit, ExternalLink } from "lucide-react"
 import { actesQueries, articlesQueries } from "@/lib/actes-queries";
 import { ArticlesTab } from "@/components/ArticlesTab";
 import { ChangelogManager } from "@/components/ChangelogManager";
+import { ExportActePDF } from "@/components/ExportActePDF";
 
 export default function TexteDetail() {
   const { id } = useParams();
@@ -111,10 +112,13 @@ export default function TexteDetail() {
             </p>
           </div>
         </div>
-        <Button variant="outline" onClick={() => navigate(`/actes/${id}/editer`)}>
-          <Edit className="h-4 w-4 mr-2" />
-          Éditer
-        </Button>
+        <div className="flex gap-2">
+          <ExportActePDF acteId={id!} acteTitle={texte.intitule} />
+          <Button variant="outline" onClick={() => navigate(`/actes/${id}/editer`)}>
+            <Edit className="h-4 w-4 mr-2" />
+            Éditer
+          </Button>
+        </div>
       </div>
 
       {/* Métadonnées principales */}
