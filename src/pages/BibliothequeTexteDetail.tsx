@@ -29,6 +29,7 @@ import { useState } from "react";
 import { ArticleFormModal } from "@/components/ArticleFormModal";
 import { ArticleVersionModal } from "@/components/ArticleVersionModal";
 import { ArticleVersionComparison } from "@/components/ArticleVersionComparison";
+import { RelatedDocumentsPanel } from "@/components/RelatedDocumentsPanel";
 import { sanitizeHtml, stripHtml } from "@/lib/sanitize-html";
 
 export default function BibliothequeTexteDetail() {
@@ -280,6 +281,8 @@ export default function BibliothequeTexteDetail() {
         </CardContent>
       </Card>
 
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
       <Tabs defaultValue="articles" className="space-y-4">
         <TabsList>
           <TabsTrigger value="articles">Articles ({articles?.length || 0})</TabsTrigger>
@@ -537,6 +540,13 @@ export default function BibliothequeTexteDetail() {
           </Card>
         </TabsContent>
       </Tabs>
+        </div>
+
+        {/* Sidebar with Related Documents */}
+        <div className="lg:col-span-1 space-y-4">
+          <RelatedDocumentsPanel texteId={id!} />
+        </div>
+      </div>
 
       {/* Modals */}
       <ArticleFormModal

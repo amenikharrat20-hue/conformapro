@@ -1,19 +1,29 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
-  Search, 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Search,
   FileText,
   Calendar,
   Filter,
-  ChevronRight
+  ChevronRight,
+  Sparkles,
+  Clock,
+  Star,
+  TrendingUp
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { textesReglementairesQueries, domainesQueries } from "@/lib/textes-queries";
+import { intelligentSearchQueries } from "@/lib/intelligent-search-queries";
+import { SearchHistoryPanel } from "@/components/SearchHistoryPanel";
+import { SavedSearchesPanel } from "@/components/SavedSearchesPanel";
+import { SearchSuggestionsDropdown } from "@/components/SearchSuggestionsDropdown";
+import { useAuth } from "@/contexts/AuthContext";
 
 const TYPE_LABELS: Record<string, string> = {
   LOI: "Loi",
@@ -69,20 +79,43 @@ const getPreview = (content: string, searchTerm: string, maxLength: number = 200
 
 export default function BibliothequeRechercheIntelligente() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [domaineFilter, setDomaineFilter] = useState<string>("all");
   const [statutFilter, setStatutFilter] = useState<string>("all");
   const [anneeFilter, setAnneeFilter] = useState<string>("all");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [useFullTextSearch, setUseFullTextSearch] = useState(true);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Debounce search
-  const handleSearchChange = (value: string) => {
-    setSearchTerm(value);
+  useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedSearch(value);
+      setDebouncedSearch(searchTerm);
+      setShowSuggestions(false);
     }, 300);
     return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setShowSuggestions(value.length >= 2);
+  };
+
+  const handleSelectSuggestion = (suggestion: string) => {
+    setSearchTerm(suggestion);
+    setShowSuggestions(false);
+  };
+
+  const handleSelectSavedSearch = (query: string, filters: any) => {
+    setSearchTerm(query);
+    if (filters.typeFilter) setTypeFilter(filters.typeFilter);
+    if (filters.domaineFilter) setDomaineFilter(filters.domaineFilter);
+    if (filters.statutFilter) setStatutFilter(filters.statutFilter);
+    if (filters.anneeFilter) setAnneeFilter(filters.anneeFilter);
+    searchInputRef.current?.focus();
   };
 
   const { data: domainesList } = useQuery({
@@ -90,16 +123,37 @@ export default function BibliothequeRechercheIntelligente() {
     queryFn: () => domainesQueries.getActive(),
   });
 
+  const searchFilters = {
+    searchTerm: debouncedSearch,
+    typeFilter: typeFilter !== "all" ? typeFilter : undefined,
+    domaineFilter: domaineFilter !== "all" ? domaineFilter : undefined,
+    statutFilter: statutFilter !== "all" ? statutFilter : undefined,
+    anneeFilter: anneeFilter !== "all" ? anneeFilter : undefined,
+  };
+
   const { data: searchResults, isLoading } = useQuery({
-    queryKey: ["smart-search", debouncedSearch, typeFilter, domaineFilter, statutFilter, anneeFilter],
-    queryFn: () => textesReglementairesQueries.smartSearch({
-      searchTerm: debouncedSearch,
-      typeFilter: typeFilter !== "all" ? typeFilter : undefined,
-      domaineFilter: domaineFilter !== "all" ? domaineFilter : undefined,
-      statutFilter: statutFilter !== "all" ? statutFilter : undefined,
-      anneeFilter: anneeFilter !== "all" ? anneeFilter : undefined,
-    }),
+    queryKey: ["intelligent-search", debouncedSearch, typeFilter, domaineFilter, statutFilter, anneeFilter, useFullTextSearch],
+    queryFn: async () => {
+      const results = useFullTextSearch
+        ? await intelligentSearchQueries.fullTextSearch(searchFilters)
+        : await textesReglementairesQueries.smartSearch(searchFilters);
+
+      if (user && debouncedSearch.length >= 2) {
+        await intelligentSearchQueries.trackSearch(
+          debouncedSearch,
+          searchFilters,
+          results.totalCount
+        );
+      }
+
+      return results;
+    },
     enabled: debouncedSearch.length >= 2,
+  });
+
+  const { data: popularSearches = [] } = useQuery({
+    queryKey: ['popular-searches'],
+    queryFn: () => intelligentSearchQueries.getPopularSearches(5),
   });
 
   const results = searchResults?.results || [];
@@ -118,13 +172,29 @@ export default function BibliothequeRechercheIntelligente() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
-          Recherche intelligente
-        </h1>
-        <p className="text-muted-foreground mt-2 text-sm sm:text-base">
-          Recherche avancée dans les textes et articles réglementaires
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
+              Recherche intelligente
+            </h1>
+            <Badge variant="secondary" className="hidden sm:flex items-center gap-1">
+              <Sparkles className="h-3 w-3" />
+              IA
+            </Badge>
+          </div>
+          <p className="text-muted-foreground mt-2 text-sm sm:text-base">
+            Recherche avancée avec full-text search, historique et suggestions
+          </p>
+        </div>
+        <Button
+          variant={useFullTextSearch ? "default" : "outline"}
+          size="sm"
+          onClick={() => setUseFullTextSearch(!useFullTextSearch)}
+          className="hidden sm:flex"
+        >
+          {useFullTextSearch ? "Mode intelligent" : "Mode basique"}
+        </Button>
       </div>
 
       {/* Search Bar */}
@@ -134,10 +204,19 @@ export default function BibliothequeRechercheIntelligente() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
               <Input
+                ref={searchInputRef}
                 placeholder="Rechercher par mot-clé dans titre, référence, ou contenu..."
                 value={searchTerm}
                 onChange={(e) => handleSearchChange(e.target.value)}
+                onFocus={() => searchTerm.length >= 2 && setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                 className="pl-10 text-base h-12"
+              />
+              <SearchSuggestionsDropdown
+                query={searchTerm}
+                onSelectSuggestion={handleSelectSuggestion}
+                isOpen={showSuggestions}
+                onClose={() => setShowSuggestions(false)}
               />
             </div>
             
@@ -205,6 +284,63 @@ export default function BibliothequeRechercheIntelligente() {
         </CardContent>
       </Card>
 
+      {/* Popular Searches */}
+      {popularSearches.length > 0 && debouncedSearch.length < 2 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <TrendingUp className="h-4 w-4 text-primary" />
+              Recherches populaires
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {popularSearches.map((search, idx) => (
+                <Badge
+                  key={idx}
+                  variant="secondary"
+                  className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
+                  onClick={() => setSearchTerm(search.query)}
+                >
+                  {search.query}
+                  <span className="ml-2 text-xs opacity-70">({search.search_count})</span>
+                </Badge>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Main Content Tabs */}
+      <Tabs defaultValue="results" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="results">
+            <Search className="h-4 w-4 mr-2" />
+            Résultats
+          </TabsTrigger>
+          <TabsTrigger value="history">
+            <Clock className="h-4 w-4 mr-2" />
+            Historique
+          </TabsTrigger>
+          <TabsTrigger value="saved">
+            <Star className="h-4 w-4 mr-2" />
+            Favoris
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="history" className="space-y-4">
+          <SearchHistoryPanel onSelectSearch={handleSelectSavedSearch} />
+        </TabsContent>
+
+        <TabsContent value="saved" className="space-y-4">
+          <SavedSearchesPanel
+            onSelectSearch={handleSelectSavedSearch}
+            currentQuery={debouncedSearch}
+            currentFilters={searchFilters}
+          />
+        </TabsContent>
+
+        <TabsContent value="results" className="space-y-4">
       {/* Results */}
       <Card className="shadow-medium">
         <CardHeader>
@@ -369,6 +505,8 @@ export default function BibliothequeRechercheIntelligente() {
           )}
         </CardContent>
       </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
