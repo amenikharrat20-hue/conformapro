@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { textesArticlesQueries } from "@/lib/textes-queries";
@@ -168,13 +168,10 @@ export function ArticleFormModal({
           {/* Contenu */}
           <div className="space-y-2">
             <Label htmlFor="contenu">Contenu de l'article</Label>
-            <Textarea
-              id="contenu"
+            <RichTextEditor
               value={formData.contenu}
-              onChange={(e) => setFormData({ ...formData, contenu: e.target.value })}
+              onChange={(value) => setFormData({ ...formData, contenu: value })}
               placeholder="Contenu complet de l'article..."
-              rows={12}
-              className="font-mono text-sm"
             />
             <p className="text-xs text-muted-foreground">
               Le contenu peut être modifié ultérieurement via le système de versions

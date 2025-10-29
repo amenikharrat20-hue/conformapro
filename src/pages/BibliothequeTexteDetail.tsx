@@ -29,6 +29,7 @@ import { useState } from "react";
 import { ArticleFormModal } from "@/components/ArticleFormModal";
 import { ArticleVersionModal } from "@/components/ArticleVersionModal";
 import { ArticleVersionComparison } from "@/components/ArticleVersionComparison";
+import { sanitizeHtml, stripHtml } from "@/lib/sanitize-html";
 
 export default function BibliothequeTexteDetail() {
   const { id } = useParams<{ id: string }>();
@@ -224,7 +225,12 @@ export default function BibliothequeTexteDetail() {
               </div>
               <CardTitle className="text-2xl">{texte.titre}</CardTitle>
               {texte.resume && (
-                <CardDescription className="mt-2">{texte.resume}</CardDescription>
+                <CardDescription className="mt-2">
+                  <div 
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(texte.resume) }}
+                    className="prose prose-sm max-w-none"
+                  />
+                </CardDescription>
               )}
             </div>
             {texte.fichier_pdf_url && (
@@ -324,7 +330,7 @@ export default function BibliothequeTexteDetail() {
                             </CollapsibleTrigger>
                             {article.contenu && (
                               <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-                                {article.contenu}
+                                {stripHtml(article.contenu)}
                               </p>
                             )}
                           </div>
@@ -374,8 +380,11 @@ export default function BibliothequeTexteDetail() {
                           {article.contenu && (
                             <div className="mb-4">
                               <h4 className="text-sm font-medium text-muted-foreground mb-2">Contenu actuel:</h4>
-                              <div className="p-3 bg-muted/50 rounded-md">
-                                <p className="text-sm whitespace-pre-wrap">{article.contenu}</p>
+                              <div className="p-3 bg-muted/50 rounded-md prose prose-sm max-w-none">
+                                <div 
+                                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(article.contenu) }}
+                                  className="text-sm"
+                                />
                               </div>
                             </div>
                           )}

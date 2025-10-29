@@ -20,6 +20,7 @@ import { textesArticlesQueries, textesArticlesVersionsQueries } from "@/lib/text
 import { toast } from "sonner";
 import { useState } from "react";
 import ReactDiffViewer from 'react-diff-viewer-continued';
+import { sanitizeHtml } from "@/lib/sanitize-html";
 
 export default function BibliothequeArticleVersions() {
   const { articleId } = useParams<{ articleId: string }>();
@@ -218,7 +219,10 @@ export default function BibliothequeArticleVersions() {
         <CardContent>
           {article.contenu ? (
             <div className="prose prose-sm max-w-none">
-              <div className="text-sm whitespace-pre-wrap">{article.contenu}</div>
+              <div 
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(article.contenu) }}
+                className="text-sm"
+              />
             </div>
           ) : (
             <p className="text-muted-foreground text-sm">Aucun contenu</p>

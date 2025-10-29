@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { textesReglementairesQueries, domainesQueries } from "@/lib/textes-queries";
@@ -343,12 +343,11 @@ export function TexteReglementaireFormModal({
           {/* Résumé */}
           <div className="space-y-2">
             <Label htmlFor="resume">Résumé</Label>
-            <Textarea
-              id="resume"
+            <RichTextEditor
               value={formData.resume}
-              onChange={(e) => setFormData({ ...formData, resume: e.target.value })}
-              rows={3}
+              onChange={(value) => setFormData({ ...formData, resume: value })}
               placeholder="Résumé du contenu du texte..."
+              className="min-h-[150px]"
             />
           </div>
 
