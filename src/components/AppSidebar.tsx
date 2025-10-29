@@ -1,4 +1,4 @@
-import { LayoutDashboard, FileText, ClipboardCheck, AlertTriangle, ShieldCheck, GraduationCap, HardHat, Users, FileCheck, BookOpen, Menu, Building2, Factory, Library, ChevronDown, FolderOpen, Settings, UserCog, Shield } from "lucide-react";
+import { LayoutDashboard, FileText, ClipboardCheck, AlertTriangle, ShieldCheck, GraduationCap, HardHat, Users, FileCheck, BookOpen, Menu, Building2, Factory, Library, ChevronDown, FolderOpen, Settings, UserCog, Shield, Stethoscope } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useState } from "react";
 import {
@@ -57,6 +57,7 @@ const menuItems: MenuItem[] = [
   { title: "Incidents HSE", url: "/incidents", icon: AlertTriangle },
   { title: "Audits & Inspections", url: "/audits", icon: ShieldCheck },
   { title: "Formations", url: "/formations", icon: GraduationCap },
+  { title: "Visites médicales", url: "/visites-medicales", icon: Stethoscope },
   { title: "EPI & Équipements", url: "/epi", icon: HardHat },
   { title: "Prestataires", url: "/prestataires", icon: Users },
   { title: "Permis de travail", url: "/permis", icon: FileCheck },
