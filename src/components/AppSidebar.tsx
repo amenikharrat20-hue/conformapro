@@ -41,13 +41,22 @@ const menuItems: MenuItem[] = [
   { title: "Tableau de bord", url: "/dashboard", icon: LayoutDashboard },
   { title: "Clients", url: "/clients", icon: Building2 },
   { title: "Sites", url: "/sites", icon: Factory },
-  { title: "📚 Bibliothèque réglementaire", url: "/bibliotheque", icon: Library },
-  { 
-    title: "Veille réglementaire", 
-    url: "/veille", 
+  {
+    title: "📚 Bibliothèque réglementaire",
+    url: "/bibliotheque",
+    icon: Library,
+    subItems: [
+      { title: "Navigation", url: "/bibliotheque" },
+      { title: "Tableau de bord", url: "/bibliotheque/tableau-de-bord" },
+      { title: "Recherche intelligente", url: "/bibliotheque/recherche" },
+      { title: "Domaines", url: "/veille/domaines" }
+    ]
+  },
+  {
+    title: "Veille réglementaire",
+    url: "/veille",
     icon: FileText,
     subItems: [
-      { title: "Domaines", url: "/veille/domaines" },
       { title: "Évaluation de conformité", url: "/veille/conformite" },
       { title: "Plan d'action", url: "/veille/actions" }
     ]
